@@ -47,9 +47,6 @@ def generate_launch_description():
     nav2_sim_config_path = PathJoinSubstitution(
         [FindPackageShare('linorobot2_navigation'), 'config', 'navigation_sim.yaml']
     )
-    twist_mux_params = PathJoinSubstitution(
-        [FindPackageShare('linorobot2_navigation'), 'config', 'twist_mux.yaml']
-    )
     return LaunchDescription([
         DeclareLaunchArgument(
             name='sim', 
@@ -59,13 +56,13 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='rviz', 
-            default_value='false',
+            default_value='true',
             description='Run rviz'
         ),
 
         DeclareLaunchArgument(
             name='map', 
-            default_value=default_map_path,
+            default_value="/home/marcel/linorobot2_ws/new_map.yaml",
             description='Navigation map path'
         ),
 
@@ -99,13 +96,6 @@ def generate_launch_description():
             parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
         ),
         
-        Node(
-            package='twist_mux',
-            executable='twist_mux',
-            name='twist_mux',
-            parameters=[twist_mux_params, {'use_sim_time': True}],
-            remappings=[('/cmd_vel_out','/omni_cont/cmd_vel')]
-        ),
         
         Node(
             package = 'main_pkg',

@@ -49,7 +49,10 @@ def generate_launch_description():
     extra_launch_path = PathJoinSubstitution(
         [FindPackageShare('linorobot2_bringup'), 'launch', 'extra.launch.py']
     )
-
+    
+    twist_mux_params = PathJoinSubstitution(
+        [FindPackageShare('linorobot2_navigation'), 'config', 'twist_mux.yaml']
+    )
     return LaunchDescription([
         DeclareLaunchArgument(
             name='custom_robot', 
@@ -121,6 +124,16 @@ def generate_launch_description():
             executable='game_pad',
             name='game_pad',
             output='screen',
+        ),
+        
+        Node(
+            package='twist_mux',
+            executable='twist_mux',
+            name='twist_mux',
+            parameters=[twist_mux_params],
+            remappings=[
+                ('cmd_vel_out','omni_cont/cmd_vel')
+            ]
         ),
 
         Node(
