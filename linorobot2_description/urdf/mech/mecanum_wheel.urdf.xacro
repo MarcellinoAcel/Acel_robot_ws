@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:macro name="mecanum_wheel" params="side radius width pos_x pos_y pos_z mass">
+  <xacro:macro name="mecanum_wheel" params="side radius width pos_x pos_y pos_z mass yaw">
     <link name="${side}_wheel_link">
       <visual>
         <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
@@ -46,7 +46,7 @@
       <axis xyz="0 1 0" />
       <parent link="base_link"/>
       <child link="${side}_wheel_link"/>
-      <origin xyz="${pos_x} ${pos_y} ${pos_z}" rpy="0 0 0"/>
+      <origin xyz="${pos_x} ${pos_y} ${pos_z}" rpy="0 0 ${yaw}"/>
     </joint>
   </xacro:macro>
 </robot>

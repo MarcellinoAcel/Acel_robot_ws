@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'key_py_pkg'
+package_name = 'main_pkg'
 
 setup(
     name=package_name,
@@ -16,11 +16,11 @@ setup(
     maintainer='marcel',
     maintainer_email='saragihmarcel34@gmail.com',
     description='TODO: Package description',
-    license='Apache-2.0',
+    license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'key_py_node = key_py_pkg.key_py_node:main'
+            'main = main_pkg.main:main'
         ],
     },
 )

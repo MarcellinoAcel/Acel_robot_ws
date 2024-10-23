@@ -21,7 +21,7 @@ from launch.conditions import IfCondition
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
 from launch.conditions import IfCondition, UnlessCondition
-
+from launch.actions import TimerAction
 
 MAP_NAME='playground' #change to the name of your own map here
 
@@ -37,7 +37,7 @@ def generate_launch_description():
     )
 
     default_map_path = PathJoinSubstitution(
-        [FindPackageShare('linorobot2_navigation'), 'maps', f'{MAP_NAME}.yaml']
+        [FindPackageShare('linorobot2_navigation'), 'maps', 'lapangan_padi.yaml']
     )
 
     nav2_config_path = PathJoinSubstitution(
@@ -47,8 +47,9 @@ def generate_launch_description():
     nav2_sim_config_path = PathJoinSubstitution(
         [FindPackageShare('linorobot2_navigation'), 'config', 'navigation_sim.yaml']
     )
-
-
+    twist_mux_params = PathJoinSubstitution(
+        [FindPackageShare('linorobot2_navigation'), 'config', 'twist_mux.yaml']
+    )
     return LaunchDescription([
         DeclareLaunchArgument(
             name='sim', 
@@ -62,7 +63,7 @@ def generate_launch_description():
             description='Run rviz'
         ),
 
-       DeclareLaunchArgument(
+        DeclareLaunchArgument(
             name='map', 
             default_value=default_map_path,
             description='Navigation map path'
@@ -96,5 +97,26 @@ def generate_launch_description():
             arguments=['-d', rviz_config_path],
             condition=IfCondition(LaunchConfiguration("rviz")),
             parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
+        ),
+        
+        Node(
+            package='twist_mux',
+            executable='twist_mux',
+            name='twist_mux',
+            parameters=[twist_mux_params, {'use_sim_time': True}],
+            remappings=[('/cmd_vel_out','/omni_cont/cmd_vel')]
+        ),
+        
+        Node(
+            package = 'main_pkg',
+            executable = 'main',
+            name = 'main',
+            output = 'screen',
+        ),
+        Node(
+            package='set',
+            executable = 'initial_pose',
+            name ='initial_pose',
+            output = 'screen',
         )
     ])

@@ -26,6 +26,7 @@
     pos_y="${wheel_pos_y}" 
     pos_z="${wheel_pos_z}" 
     mass="${wheel_mass}"
+    yaw = "${-wheel_yaw}"
   />
 
   <xacro:mecanum_wheel 
@@ -36,6 +37,7 @@
     pos_y="${-wheel_pos_y}" 
     pos_z="${wheel_pos_z}" 
     mass="${wheel_mass}"
+    yaw = "${wheel_yaw}"
   />
   <xacro:mecanum_wheel 
     side="rear_left"
@@ -45,6 +47,7 @@
     pos_y="${wheel_pos_y}" 
     pos_z="${wheel_pos_z}" 
     mass="${wheel_mass}"
+    yaw = "${wheel_yaw}"
   />
 
   <xacro:mecanum_wheel 
@@ -55,6 +58,7 @@
     pos_y="${-wheel_pos_y}" 
     pos_z="${wheel_pos_z}" 
     mass="${wheel_mass}"
+    yaw = "${-wheel_yaw}"
   />
 
   <xacro:imu/>

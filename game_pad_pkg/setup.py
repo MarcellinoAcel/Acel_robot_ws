@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'ds4_pkg'
+package_name = 'game_pad_pkg'
 
 setup(
     name=package_name,
@@ -16,11 +16,11 @@ setup(
     maintainer='marcel',
     maintainer_email='saragihmarcel34@gmail.com',
     description='TODO: Package description',
-    license='Apache-2.0',
+    license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ds4_node = ds4_pkg.ds4_node:main'
+            'game_pad = game_pad_pkg.game_pad:main'
         ],
     },
 )

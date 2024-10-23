@@ -65,7 +65,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='base_serial_port', 
-            default_value='/dev/ttyACM0',
+            default_value='/dev/serial/by-id/usb-Teensyduino_USB_Serial_15356540-if00',
             description='Linorobot Base Serial Port'
         ),
 
@@ -114,6 +114,13 @@ def generate_launch_description():
             parameters=[
                 {'orientation_stddev' : LaunchConfiguration('orientation_stddev')}
             ]
+        ),
+        
+        Node(
+            package='game_pad_pkg',
+            executable='game_pad',
+            name='game_pad',
+            output='screen',
         ),
 
         Node(
