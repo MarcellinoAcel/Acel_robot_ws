@@ -82,7 +82,8 @@ class GamePad(Node):
             linear_axis_Y = 0.0
         if abs(angular_axis_Z) < 0.03:
             angular_axis_Z = 0.0
-
+        if linear_axis_X == 0.0 and linear_axis_Y == 0.0 and angular_axis_Z == 0.0:
+            return 
         # Membuat pesan Twist
         twist = Twist()
         twist.linear.x = linear_axis_X
