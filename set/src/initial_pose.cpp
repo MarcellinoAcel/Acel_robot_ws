@@ -79,7 +79,9 @@ int main(int argc, char *argv[])
       break;
     }
 
-    node->publish_pose(1.7689088370349864, -1.5561960613724437, toRad(90.0));
+    // node->publish_pose(0.0,0.0,toRad(0.0));
+    // node->publish_pose(1.7689088370349864, -1.5561960613724437, toRad(90.0));
+    node->publish_pose(-0.677, -4.117, 0.011);
 
     rclcpp::spin_some(node);
 

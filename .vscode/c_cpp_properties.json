@@ -7,7 +7,9 @@
                 "/opt/ros/humble/include/rclcpp/rclcpp/**",
                 "/opt/ros/humble/include/geometry_msgs/geometry_msgs/**",
                 "/opt/ros/humble/include/geometry_msgs",
-                "/opt/ros/humble/include/rclcpp"
+                "/opt/ros/humble/include/nav2_util/**",
+                "/opt/ros/humble/include/rclcpp/**",
+                ""
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",
