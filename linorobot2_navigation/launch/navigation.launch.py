@@ -65,8 +65,8 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='map', 
-            # default_value="/home/marcel/linorobot2_ws/new_map.yaml",
-            default_value=default_map_path,
+            default_value="/home/marcel/linorobot2_ws/map_temp.yaml",
+            # default_value=default_map_path,
             description='Navigation map path'
         ),
 

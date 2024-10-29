@@ -43,6 +43,7 @@ class NavigateToPoseClient(Node):
     def sign_callback(self, msg):
         button_A = msg.data[0]
         button_Y = msg.data[4]
+        button_X = msg.data[3]
         
         if button_A:
             self.get_logger().info("button 6 pressed, moving to {0, 0, 0}")
@@ -50,6 +51,9 @@ class NavigateToPoseClient(Node):
         elif button_Y:
             self.get_logger().info("button Y pressed, moving to {2, 0, 0}")
             self.send_goal(2.0, 0.0, 0.0)
+        elif button_X:
+            self.get_logger().info("cancel journey")
+            self.cancel_goal()
 
 def main(args=None):
     rclpy.init(args=args)
