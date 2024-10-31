@@ -100,6 +100,7 @@ bt_navigator_rclcpp_node:
   ros__parameters:
     use_sim_time: false
 
+
 controller_server:
   ros__parameters:
     # controller server parameters (see Controller Server for more info)
@@ -117,8 +118,8 @@ controller_server:
       movement_time_allowance: 10.0
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.3
-      yaw_goal_tolerance: 0.3
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
       stateful: True
     # DWB controller parameters
     FollowPath:
@@ -126,22 +127,22 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.5
+      max_vel_x: 0.26
       max_vel_y: 0.0
       max_vel_theta: 1.0
       min_speed_xy: 0.0
-      max_speed_xy: 0.5
+      max_speed_xy: 0.26
       min_speed_theta: 0.0
-      acc_lim_x: 3.0
+      acc_lim_x: 2.5
       acc_lim_y: 0.0
       acc_lim_theta: 3.2
-      decel_lim_x: -3.0
+      decel_lim_x: -2.5
       decel_lim_y: 0.0
       decel_lim_theta: -3.2
-      vx_samples: 10
+      vx_samples: 20
       vy_samples: 5
-      vtheta_samples: 10
-      sim_time: 1.0
+      vtheta_samples: 20
+      sim_time: 1.7
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
@@ -162,6 +163,7 @@ controller_server:
       RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
 
+
 controller_server_rclcpp_node:
   ros__parameters:
     use_sim_time: false
@@ -171,7 +173,7 @@ global_costmap:
     ros__parameters:
       use_sim_time: false
       footprint_padding: 0.03
-      update_frequency: 10.0
+      update_frequency: 1.0
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
@@ -243,7 +245,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: true
-        inflation_radius: 0.4
+        inflation_radius: 0.55
         cost_scaling_factor: 1.0
         inflate_unknown: false
         inflate_around_unknown: true
@@ -258,8 +260,8 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
-      width: 2.0
-      height: 2.0
+      width: 3
+      height: 3
       resolution: 0.05
       robot_radius: 0.5 # radius set and used, so no footprint points
       resolution: 0.05
@@ -302,8 +304,8 @@ local_costmap:
         max_obstacle_height: 2.0
         publish_voxel_map: true
         origin_z: 0.0
-        z_resolution: 0.1
-        z_voxels: 10
+        z_resolution: 0.05
+        z_voxels: 16
         max_obstacle_height: 2.0
         unknown_threshold: 15
         mark_threshold: 0
@@ -313,9 +315,9 @@ local_costmap:
           topic: /camera/depth/color/points
           max_obstacle_height: 2.0
           min_obstacle_height: 0.01
-          obstacle_max_range: 2.0
+          obstacle_max_range: 2.5
           obstacle_min_range: 0.0
-          raytrace_max_range: 2.0
+          raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           clearing: true
           marking: true
@@ -324,7 +326,7 @@ local_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: true
         inflation_radius: 0.55
-        cost_scaling_factor: 0.5
+        cost_scaling_factor: 1.0
         inflate_unknown: false
         inflate_around_unknown: true
 
@@ -343,12 +345,12 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 30.0
+    expected_planner_frequency: 20.0
     use_sim_time: false
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
-      tolerance: 0.7
+      tolerance: 0.5
       use_astar: true
       allow_unknown: true
 
