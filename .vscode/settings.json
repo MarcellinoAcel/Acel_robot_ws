@@ -1,3 +1,25 @@
 {
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "enabled",
+    "cmake.options.statusBarVisibility": "visible",
+    "cmake.sourceDirectory": "/home/marcel/linorobot2_ws/src/linorobot2/acel_controller",
+    "python.autoComplete.extraPaths": [
+        "/home/marcel/linorobot2_ws/install/micro_ros_msgs/local/lib/python3.10/dist-packages",
+        "/home/marcel/linorobot2_ws/install/micro_joy_pkg/lib/python3.10/site-packages",
+        "/home/marcel/linorobot2_ws/install/main_pkg/lib/python3.10/site-packages",
+        "/home/marcel/linorobot2_ws/install/game_pad_pkg/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/marcel/linorobot2_ws/install/micro_ros_msgs/local/lib/python3.10/dist-packages",
+        "/home/marcel/linorobot2_ws/install/micro_joy_pkg/lib/python3.10/site-packages",
+        "/home/marcel/linorobot2_ws/install/main_pkg/lib/python3.10/site-packages",
+        "/home/marcel/linorobot2_ws/install/game_pad_pkg/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "ros.distro": "humble",
+    "files.associations": {
+        "algorithm": "cpp"
+    }
 }

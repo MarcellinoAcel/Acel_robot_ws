@@ -6,10 +6,11 @@
                 "${workspaceFolder}/**",
                 "/opt/ros/humble/include/rclcpp/rclcpp/**",
                 "/opt/ros/humble/include/geometry_msgs/geometry_msgs/**",
-                "/opt/ros/humble/include/geometry_msgs",
+                "/opt/ros/humble/include/geometry_msgs/**",
+                "/opt/ros/humble/include/**",
                 "/opt/ros/humble/include/nav2_util/**",
                 "/opt/ros/humble/include/rclcpp/**",
-                ""
+                "${workspaceFolder}/lino_pure_pursuit_controller/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

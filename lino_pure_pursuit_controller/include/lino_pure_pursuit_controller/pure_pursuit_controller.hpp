@@ -1,5 +1,12 @@
-#ifndef ACEL_CONTROLLER__PURE_PURSUIT_CONTROLLER_HPP_
-#define ACEL_CONTROLLER__PURE_PURSUIT_CONTROLLER_HPP_
+/*
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ *  Author(s): Shrijit Singh <shrijitsingh99@gmail.com>
+ *
+ */
+
+#ifndef lino_pure_pursuit_controller__PURE_PURSUIT_CONTROLLER_HPP_
+#define lino_pure_pursuit_controller__PURE_PURSUIT_CONTROLLER_HPP_
 
 #include <string>
 #include <vector>
@@ -9,24 +16,21 @@
 #include "rclcpp/rclcpp.hpp"
 #include "pluginlib/class_loader.hpp"
 #include "pluginlib/class_list_macros.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "nav_msgs/msg/path.hpp"
-#include "tf2_ros/buffer.h"
-#include "rclcpp_lifecycle/lifecycle_publisher.hpp"
 
-namespace acel_pure_pursuit_controller
+namespace lino_pure_pursuit_controller
 {
+
     class PurePursuitController : public nav2_core::Controller
     {
     public:
         PurePursuitController() = default;
         ~PurePursuitController() override = default;
+        
         void configure(
             const rclcpp_lifecycle::LifecycleNode::WeakPtr &parent,
             std::string name,
-            std::shared_ptr<tf2_ros::Buffer> tf,
-            std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros) override;
+            const std::shared_ptr<tf2_ros::Buffer> tf,
+            const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros) override;
 
         void cleanup() override;
         void activate() override;
@@ -65,6 +69,7 @@ namespace acel_pure_pursuit_controller
         nav_msgs::msg::Path global_plan_;
         std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>> global_pub_;
     };
-}
 
-#endif // ACEL_CONTROLLER__PURE_PURSUIT_CONTROLLER_HPP_
+} // namespace lino_pure_pursuit_controller
+
+#endif // lino_pure_pursuit_controller__PURE_PURSUIT_CONTROLLER_HPP_

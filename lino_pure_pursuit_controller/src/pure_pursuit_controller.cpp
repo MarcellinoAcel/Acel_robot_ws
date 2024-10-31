@@ -1,10 +1,18 @@
+/*
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ *  Author(s): Shrijit Singh <shrijitsingh99@gmail.com>
+ *  Contributor: Pham Cong Trang <phamcongtranghd@gmail.com>
+ *  Contributor: Mitchell Sayer <mitchell4408@gmail.com>
+ */
+
 #include <algorithm>
 #include <string>
 #include <memory>
 
 #include "nav2_core/exceptions.hpp"
 #include "nav2_util/node_utils.hpp"
-#include "acel_controller/pure_pursuit_controller.hpp"
+#include "lino_pure_pursuit_controller/pure_pursuit_controller.hpp"
 #include "nav2_util/geometry_utils.hpp"
 
 using nav2_util::declare_parameter_if_not_declared;
@@ -14,8 +22,12 @@ using std::hypot;
 using std::max;
 using std::min;
 
-namespace acel_pure_pursuit_controller
+namespace lino_pure_pursuit_controller
 {
+
+    /**
+     * Find element in iterator with the minimum calculated value
+     */
     template <typename Iter, typename Getter>
     Iter min_by(Iter begin, Iter end, Getter getCompareVal)
     {
@@ -39,9 +51,8 @@ namespace acel_pure_pursuit_controller
 
     void PurePursuitController::configure(
         const rclcpp_lifecycle::LifecycleNode::WeakPtr &parent,
-        std::string name,
-        std::shared_ptr<tf2_ros::Buffer> tf,
-        std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
+        std::string name, const std::shared_ptr<tf2_ros::Buffer> tf,
+        const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
     {
         node_ = parent;
 
@@ -304,6 +315,8 @@ namespace acel_pure_pursuit_controller
         }
         return false;
     }
-}
 
-PLUGINLIB_EXPORT_CLASS(acel_pure_pursuit_controller::PurePursuitController, nav2_core::Controller)
+} // namespace lino_pure_pursuit_controller
+
+// Register this controller as a nav2_core plugin
+PLUGINLIB_EXPORT_CLASS(lino_pure_pursuit_controller::PurePursuitController, nav2_core::Controller)
