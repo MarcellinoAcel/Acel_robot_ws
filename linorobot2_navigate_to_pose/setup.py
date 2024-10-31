@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'main_pkg'
+package_name = 'linorobot2_navigate_to_pose'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'main = main_pkg.main:main'
+            'linorobot2_navigate_to_pose = linorobot2_navigate_to_pose.linorobot2_navigate_to_pose:linorobot2_navigate_to_pose'
         ],
     },
 )
