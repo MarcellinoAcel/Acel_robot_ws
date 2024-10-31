@@ -108,10 +108,10 @@ def generate_launch_description():
             name = 'main',
             output = 'screen',
         ),
-        # Node(
-        #     package='set',
-        #     executable = 'initial_pose',
-        #     name ='initial_pose',
-        #     output = 'screen',
-        # )
+        Node(
+            package='speed_increase',
+            executable = 'speed_increase',
+            name ='speed_increase',
+            output = 'screen',
+        )
     ])
