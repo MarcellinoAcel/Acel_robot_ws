@@ -26,7 +26,7 @@ amcl:
     recovery_alpha_fast: 0.0
     recovery_alpha_slow: 0.0
     resample_interval: 1
-    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+    robot_model_type: "nav2_amcl::OmniMotionModel"
     save_pose_rate: 0.5
     sigma_hit: 0.2
     tf_broadcast: true
@@ -40,9 +40,9 @@ amcl:
     scan_topic: scan
     set_initial_pose: true
     initial_pose:
-      x: -0.727
-      y: -0.148
-      yaw: 0.384
+      x: 1.473
+      y: -4.532
+      yaw: 0.402
 
 amcl_map_client:
   ros__parameters:

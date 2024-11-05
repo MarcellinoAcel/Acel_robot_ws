@@ -55,13 +55,13 @@ class GamePad(Node):
 
         # Mengubah kecepatan dengan tombol 6 dan 7
         if self.joystick.get_button(6) and not self.button6_pressed:
-            self.speed -= 0.2
+            self.speed -= 1.0
             self.button6_pressed = True  # Pastikan tombol tidak tertekan berulang kali
         elif not self.joystick.get_button(6):
             self.button6_pressed = False
 
         if self.joystick.get_button(7) and not self.button7_pressed:
-            self.speed += 0.2
+            self.speed += 1.0
             self.button7_pressed = True
         elif not self.joystick.get_button(7):
             self.button7_pressed = False
