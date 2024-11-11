@@ -36,11 +36,14 @@ def generate_launch_description():
         [FindPackageShare('linorobot2_navigation'), 'rviz', 'linorobot2_navigation.rviz']
     )
 
-    # default_map_path = PathJoinSubstitution(
-    #     [FindPackageShare('linorobot2_navigation'), 'maps', 'lapangan_padi.yaml']
-    # )
-    default_map_path = PathJoinSubstitution(
-        [FindPackageShare('linorobot2_navigation'), 'maps', 'aburobocon2024_map.yaml']
+    default_map_path_sim = PathJoinSubstitution(
+        [FindPackageShare('linorobot2_navigation'), 'maps', 'playground.yaml']
+    )
+    default_map_path_trial = PathJoinSubstitution(
+        [FindPackageShare('linorobot2_navigation'), 'maps', 'map_temp.yaml']
+    )
+    default_map_path_regional = PathJoinSubstitution(
+        [FindPackageShare('linorobot2_navigation'), 'maps', 'lapangan.yaml']
     )
 
     nav2_config_path = PathJoinSubstitution(
@@ -65,9 +68,10 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='map', 
-            default_value="/home/barelang_v/linorobot2_ws/map_temp.yaml",
+            # default_value="/home/barelang_v/linorobot2_ws/map_temp.yaml",
+            # default_value="/home/barelang_v/linorobot2_ws/map_temp.yaml",
             # default_value="/home/marcel/linorobot2_ws/map_temp.yaml",
-            # default_value=default_map_path,
+            default_value=default_map_path_sim,
             description='Navigation map path'
         ),
 
