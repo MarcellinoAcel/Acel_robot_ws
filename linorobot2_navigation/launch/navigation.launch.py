@@ -101,17 +101,10 @@ def generate_launch_description():
             parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
         ),
         
-        
         Node(
-            package = 'main_pkg',
-            executable = 'main',
-            name = 'main',
+            package = 'linorobot2_goto',
+            executable = 'linorobot2_goto',
+            name = 'linorobot2_goto',
             output = 'screen',
-        ),
-        # Node(
-        #     package='speed_increase',
-        #     executable = 'speed_increase',
-        #     name ='speed_increase',
-        #     output = 'screen',
-        # )
+        )
     ])

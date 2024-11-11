@@ -47,8 +47,8 @@ class GamePad(Node):
 
         msg.data = button_states
         self.publisher_button.publish(msg)
-
-        self.get_logger().info(f'Publishing button states: {msg.data}')
+        self.get_logger().info(f'\ncurrent speed : {self.speed}\n')
+        # self.get_logger().info(f'Publishing button states: {msg.data}')
 
     def axis_callback(self):
         pygame.event.pump()

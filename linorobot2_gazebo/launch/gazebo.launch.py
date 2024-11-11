@@ -37,7 +37,9 @@ def generate_launch_description():
     description_launch_path = PathJoinSubstitution(
         [FindPackageShare('linorobot2_description'), 'launch', 'description.launch.py']
     )
-
+    twist_mux_params = PathJoinSubstitution(
+        [FindPackageShare("linorobot2_navigation"), 'launch', 'twist_mux.yaml']
+    )
     return LaunchDescription([
         DeclareLaunchArgument(
             name='world', 
@@ -113,7 +115,24 @@ def generate_launch_description():
                 'use_sim_time': str(use_sim_time),
                 'publish_joints': 'false',
             }.items()
-        )
+        ),
+                Node(
+            package='game_pad_pkg',
+            executable='game_pad',
+            name='game_pad',
+            output='screen',
+        ),
+        
+        Node(
+            package='twist_mux',
+            executable='twist_mux',
+            name='twist_mux',
+            parameters=[twist_mux_params],
+            remappings=[
+                ('cmd_vel_out','cmd_vel')
+            ]
+        ),
+
     ])
 
 #sources: 
