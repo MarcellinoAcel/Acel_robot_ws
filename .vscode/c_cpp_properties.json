@@ -10,7 +10,8 @@
                 "/opt/ros/humble/include/**",
                 "/opt/ros/humble/include/nav2_util/**",
                 "/opt/ros/humble/include/rclcpp/**",
-                "${workspaceFolder}/lino_pure_pursuit_controller/include/**"
+                "/usr/local/include/**",
+                "${workspaceFolder}/bv_nav/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

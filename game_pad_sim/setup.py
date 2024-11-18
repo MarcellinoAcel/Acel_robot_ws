@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'micro_joy_pkg'
+package_name = 'game_pad_sim'
 
 setup(
     name=package_name,
@@ -13,14 +13,14 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='marcel',
+    maintainer='barelang_v',
     maintainer_email='saragihmarcel34@gmail.com',
     description='TODO: Package description',
-    license='Apache-2.0',
+    license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'micro_joy_node = micro_joy_pkg.micro_joy_node:main'
+            'game_pad_sim = game_pad_sim.game_pad_sim:main'
         ],
     },
 )

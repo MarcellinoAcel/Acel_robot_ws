@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(speed_increase)
+project(bv_nav)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,24 +7,35 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(tf2 REQUIRED)
 
-add_executable(speed_increase src/speed_increase.cpp)
-target_include_directories(speed_increase PUBLIC
+add_executable(bv_nav src/bv_nav.cpp)
+target_include_directories(bv_nav PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_compile_features(speed_increase PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_compile_features(bv_nav PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 ament_target_dependencies(
-  speed_increase
-  "rclcpp"
+  bv_nav
   "geometry_msgs"
+  "nav2_msgs"
   "std_msgs"
+  "rclcpp"
+  "rclcpp_action"
+  "tf2"
 )
 
-install(TARGETS speed_increase
+install(TARGETS bv_nav
   DESTINATION lib/${PROJECT_NAME})
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
