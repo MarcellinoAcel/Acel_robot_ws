@@ -40,7 +40,7 @@ def generate_launch_description():
         [FindPackageShare('linorobot2_navigation'), 'maps', 'playground.yaml']
     )
     default_map_path_trial = PathJoinSubstitution(
-        [FindPackageShare('linorobot2_navigation'), 'maps', 'map_temp.yaml']
+        [FindPackageShare('linorobot2_navigation'), 'maps', 'current_map.yaml']
     )
     default_map_path_regional = PathJoinSubstitution(
         [FindPackageShare('linorobot2_navigation'), 'maps', 'lapangan.yaml']
@@ -68,10 +68,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='map', 
-            # default_value="/home/barelang_v/linorobot2_ws/map_temp.yaml",
-            # default_value="/home/barelang_v/linorobot2_ws/map_temp.yaml",
-            # default_value="/home/marcel/linorobot2_ws/map_temp.yaml",
-            default_value=default_map_path_sim,
+            default_value=default_map_path_trial,
             description='Navigation map path'
         ),
 
@@ -106,9 +103,9 @@ def generate_launch_description():
         ),
         
         Node(
-            package = 'linorobot2_goto',
-            executable = 'linorobot2_goto',
-            name = 'linorobot2_goto',
+            package = 'bv_nav',
+            executable = 'bv_nav',
+            name = 'bv_nav',
             output = 'screen',
         )
     ])
