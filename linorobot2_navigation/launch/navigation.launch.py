@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import launch
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -36,6 +37,19 @@ def generate_launch_description():
         [FindPackageShare('linorobot2_navigation'), 'rviz', 'linorobot2_navigation.rviz']
     )
 
+    choose_map = DeclareLaunchArgument(
+        'use_real_map',
+        default_value='true',
+        description='if true, use real map, else use sim map',
+    )
+    real_map_path = PathJoinSubstitution(
+        [FindPackageShare('linorobot2_navigation'), 'maps', 'current_map.yaml']
+    )
+    sim_map_path = PathJoinSubstitution(
+        [FindPackageShare('linorobot2_navigation'), 'maps', 'playground.yaml']
+    )
+    map_file = real_map_path if LaunchConfiguration('use_real_map') == 'true' else sim_map_path
+
     default_map_path_sim = PathJoinSubstitution(
         [FindPackageShare('linorobot2_navigation'), 'maps', 'playground.yaml']
     )
@@ -54,6 +68,7 @@ def generate_launch_description():
         [FindPackageShare('linorobot2_navigation'), 'config', 'navigation_sim.yaml']
     )
     return LaunchDescription([
+        choose_map,
         DeclareLaunchArgument(
             name='sim', 
             default_value='false',
@@ -68,7 +83,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='map', 
-            default_value=default_map_path_trial,
+            default_value=map_file,
             description='Navigation map path'
         ),
 

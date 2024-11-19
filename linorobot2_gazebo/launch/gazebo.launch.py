@@ -21,6 +21,7 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch.conditions import IfCondition, UnlessCondition
 
 
 def generate_launch_description():
@@ -40,7 +41,30 @@ def generate_launch_description():
     twist_mux_params = PathJoinSubstitution(
         [FindPackageShare("linorobot2_navigation"), 'launch', 'twist_mux.yaml']
     )
+
+    game_controller_use = DeclareLaunchArgument(
+        'use_real_game_pad',
+        default_value='true',
+        description='determine which game_pad to use'
+    )
+    game_pkg = Node(
+        package='game_pad_pkg',
+        executable='game_pad',
+        name = 'game_pad',
+        output = 'screen',
+        condition = IfCondition(LaunchConfiguration('use_real_game_pad'))
+    )
+    game_sim = Node(
+        package='game_pad_sim',
+        executable='game_pad_sim',
+        name = 'game_pad_sim',
+        output = 'screen',
+        condition = UnlessCondition(LaunchConfiguration('use_real_game_pad')) 
+    )
     return LaunchDescription([
+        game_controller_use,
+        game_pkg,
+        game_sim,
         DeclareLaunchArgument(
             name='world', 
             default_value=world_path,
@@ -115,12 +139,6 @@ def generate_launch_description():
                 'use_sim_time': str(use_sim_time),
                 'publish_joints': 'false',
             }.items()
-        ),
-                Node(
-            package='game_pad_pkg',
-            executable='game_pad',
-            name='game_pad',
-            output='screen',
         ),
         
         Node(

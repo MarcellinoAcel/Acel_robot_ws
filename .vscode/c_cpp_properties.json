@@ -11,10 +11,11 @@
                 "/opt/ros/humble/include/nav2_util/**",
                 "/opt/ros/humble/include/rclcpp/**",
                 "/usr/local/include/**",
-                "${workspaceFolder}/bv_nav/include/**"
+                "${workspaceFolder}/bv_nav/include/**",
+                "${workspaceFolder}/acel_controller/include/**"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/clang",
+            "compilerPath": "/usr/bin/g++",
             "cStandard": "c17",
             "cppStandard": "c++14",
             "intelliSenseMode": "linux-clang-x64"
