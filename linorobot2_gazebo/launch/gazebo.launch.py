@@ -62,9 +62,9 @@ def generate_launch_description():
         condition = UnlessCondition(LaunchConfiguration('use_real_game_pad')) 
     )
     return LaunchDescription([
-        game_controller_use,
-        game_pkg,
-        game_sim,
+        # game_controller_use,
+        # game_pkg,
+        # game_sim,
         DeclareLaunchArgument(
             name='world', 
             default_value=world_path,

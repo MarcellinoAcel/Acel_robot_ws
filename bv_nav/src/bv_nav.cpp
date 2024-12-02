@@ -72,7 +72,15 @@ public:
         };
         double yaw, pitch, roll;
         conv.quat_to_eular(q, yaw, pitch, roll);
-        IC(msg.pose.pose.position.x, msg.pose.pose.position.y, conv.toDeg(yaw));
+
+        auto robot_pose = geometry_msgs::msg::Pose2D();
+        robot_pose.x = msg.pose.pose.position.x;
+        robot_pose.y = msg.pose.pose.position.y;
+        robot_pose.theta = conv.toDeg(yaw);
+
+        pub_pose->publish(robot_pose);
+
+        // IC(msg.pose.pose.position.x, msg.pose.pose.position.y, conv.toDeg(yaw));
     }
 
     void sign_callback(const std_msgs::msg::Int32MultiArray &msg)
@@ -92,9 +100,10 @@ public:
         }
         else if (but.Y)
         {
-            send_goal(2, 0, 0);
+            send_goal(2, 5, 0);
         }
     }
+
 private:
     struct button
     {

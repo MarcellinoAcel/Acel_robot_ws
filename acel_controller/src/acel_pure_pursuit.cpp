@@ -3,11 +3,18 @@
 #include <string>
 #include <memory>
 #include <cstdio>
+#include <stdio.h>
 
 #include "nav2_core/exceptions.hpp"
 #include "nav2_util/node_utils.hpp"
 #include "acel_controller/acel_pure_pursuit.hpp"
 #include "nav2_util/geometry_utils.hpp"
+
+#include "acel_controller/convertion.hpp"
+#include "acel_controller/pid.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "icecream.hpp"
+using namespace std;
 
 using nav2_util::declare_parameter_if_not_declared;
 using nav2_util::geometry_utils::euclidean_distance;
@@ -15,6 +22,9 @@ using std::abs;
 using std::hypot;
 using std::max;
 using std::min;
+using std::placeholders::_1;
+PID omni;
+Convertion convert;
 
 namespace acel_pure_pursuit
 {
@@ -64,7 +74,16 @@ namespace acel_pure_pursuit
         node, plugin_name_ + ".max_angular_vel", rclcpp::ParameterValue(3.0));
     declare_parameter_if_not_declared(
         node, plugin_name_ + ".transform_tolerance", rclcpp::ParameterValue(1.0));
+    declare_parameter_if_not_declared(
+        node, plugin_name_ + ".kp", rclcpp::ParameterValue(1.0));
+    declare_parameter_if_not_declared(
+        node, plugin_name_ + ".ki", rclcpp::ParameterValue(0.0));
+    declare_parameter_if_not_declared(
+        node, plugin_name_ + ".kd", rclcpp::ParameterValue(0.0));
 
+    node->get_parameter(plugin_name_ + ".kp", parameters.kp);
+    node->get_parameter(plugin_name_ + ".ki", parameters.ki);
+    node->get_parameter(plugin_name_ + ".kd", parameters.kd);
     node->get_parameter(plugin_name_ + ".desired_linear_vel", desired_linear_vel_);
     node->get_parameter(plugin_name_ + ".lookahead_dist", lookahead_dist_);
     node->get_parameter(plugin_name_ + ".max_angular_vel", max_angular_vel_);
@@ -73,6 +92,9 @@ namespace acel_pure_pursuit
     transform_tolerance_ = rclcpp::Duration::from_seconds(transform_tolerance);
 
     global_pub_ = node->create_publisher<nav_msgs::msg::Path>("received_global_plan", 1);
+    sub_amcl_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+        "amcl_pose", 10, std::bind(&Acel_pure_pursuit::robot_pose, this, std::placeholders::_1));
+    pub_goal = node->create_publisher<geometry_msgs::msg::Pose2D>("checking_goal", 1);
   }
 
   void Acel_pure_pursuit::cleanup()
@@ -113,10 +135,14 @@ namespace acel_pure_pursuit
       const geometry_msgs::msg::Twist &velocity,
       nav2_core::GoalChecker *goal_checker)
   {
+    auto amcl_pose_ = current_pose_;
+    auto goal_pose_msg = geometry_msgs::msg::Pose2D();
     (void)velocity;
     (void)goal_checker;
 
     auto transformed_plan = transformGlobalPlan(pose);
+    auto transformed_goal_pose = transformGlobalPoseToLocal(pose);
+    auto global_goal_pose = transformed_goal_pose;
 
     // Find the first pose which is at a distance greater than the specified lookahed distance
     auto goal_pose_it = std::find_if(
@@ -128,35 +154,51 @@ namespace acel_pure_pursuit
     {
       goal_pose_it = std::prev(transformed_plan.poses.end());
     }
-    auto goal_pose = goal_pose_it->pose;
+    // auto goal_pose = goal_pose_it->pose;
+    Convertion::Quaternion goal_q = {
+        global_goal_pose.pose.orientation.w,
+        global_goal_pose.pose.orientation.x,
+        global_goal_pose.pose.orientation.y,
+        global_goal_pose.pose.orientation.z,
+    };
 
-    double linear_vel, angular_vel;
+    double goal_yaw, goal_pitch, goal_roll;
+    convert.quat_to_eular(goal_q, goal_yaw, goal_pitch, goal_roll);
 
-    // If the goal pose is in front of the robot then compute the velocity using the pure pursuit
-    // algorithm, else rotate with the max angular velocity until the goal pose is in front of the
-    // robot
-    if (goal_pose.position.x > 0)
-    {
-      auto curvature = 2.0 * goal_pose.position.y /
-                       (goal_pose.position.x * goal_pose.position.x + goal_pose.position.y * goal_pose.position.y);
-      linear_vel = desired_linear_vel_;
-      angular_vel = desired_linear_vel_ * curvature;
-    }
-    else
-    {
-      linear_vel = 0.0;
-      angular_vel = max_angular_vel_;
-    }
+    Convertion::Quaternion robot_q = {
+        amcl_pose_.pose.pose.orientation.w,
+        amcl_pose_.pose.pose.orientation.x,
+        amcl_pose_.pose.pose.orientation.y,
+        amcl_pose_.pose.pose.orientation.z,
+    };
+    double robot_yaw, robot_pitch, robot_roll;
+    convert.quat_to_eular(robot_q, robot_yaw, robot_pitch, robot_roll);
+    error.x = global_goal_pose.pose.position.x - amcl_pose_.pose.pose.position.x;
+    error.y = global_goal_pose.pose.position.y - amcl_pose_.pose.pose.position.y;
+    error.theta = goal_yaw - robot_yaw;
+    error.distance = hypot(error.x, error.y);
+    error.angle = atan2(error.y, error.x);
+    // IC(goal_pose.position.x, goal_pose.position.y);
 
-    // Create and publish a TwistStamped message with the desired velocity
+    omni.setBaseParam(parameters.kp, parameters.kp, parameters.kp);
+    omni.setHeadingParam(parameters.kp, parameters.kp, parameters.kp);
+
+    controlled.distance = omni.control_base(error.distance, desired_linear_vel_, 0);
+    controlled.angle = omni.control_base(error.angle, max_angular_vel_, 1);
+
+    goal_pose_msg.x = global_goal_pose.pose.position.x;
+    goal_pose_msg.y = global_goal_pose.pose.position.y;
+    goal_pose_msg.theta = goal_yaw;
+
+    pub_goal->publish(goal_pose_msg);
+
     geometry_msgs::msg::TwistStamped cmd_vel;
     cmd_vel.header.frame_id = pose.header.frame_id;
     cmd_vel.header.stamp = clock_->now();
-    cmd_vel.twist.linear.x = linear_vel;
-    cmd_vel.twist.angular.z = max(
-        -1.0 * abs(max_angular_vel_), min(
-                                          angular_vel, abs(
-                                                           max_angular_vel_)));
+    // -----------------------------------------------------------
+    cmd_vel.twist.linear.x = controlled.distance * cos(error.angle);
+    cmd_vel.twist.linear.y = controlled.distance * sin(error.angle);
+    cmd_vel.twist.linear.z = 0;
 
     return cmd_vel;
   }
@@ -167,11 +209,9 @@ namespace acel_pure_pursuit
     global_plan_ = path;
   }
 
-  nav_msgs::msg::Path Acel_pure_pursuit::transformGlobalPlan(
+  geometry_msgs::msg::PoseStamped Acel_pure_pursuit::transformGlobalPoseToLocal(
       const geometry_msgs::msg::PoseStamped &pose)
   {
-    // Original mplementation taken fron nav2_dwb_controller
-
     if (global_plan_.poses.empty())
     {
       throw nav2_core::PlannerException("Received plan with zero length");
@@ -210,6 +250,77 @@ namespace acel_pure_pursuit
         });
 
     // Helper function for the transform below. Transforms a PoseStamped from global frame to local
+    geometry_msgs::msg::PoseStamped stamped_pose, transformed_pose;
+    auto transformGlobalPoseToLocal = [&](const auto &global_plan_pose)
+    {
+      // We took a copy of the pose, let's lookup the transform at the current time
+      stamped_pose.header.frame_id = global_plan_.header.frame_id;
+      stamped_pose.header.stamp = pose.header.stamp;
+      stamped_pose.pose = global_plan_pose.pose;
+      transformPose(
+          tf_, costmap_ros_->getBaseFrameID(),
+          stamped_pose, transformed_pose, transform_tolerance_);
+      // RCLCPP_INFO(logger_, "Transformed pose: global (x=%.2f, y=%.2f) -> local (x=%.2f, y=%.2f)",
+      //             global_plan_pose.pose.position.x, global_plan_pose.pose.position.y,
+      //             transformed_pose.pose.position.x, transformed_pose.pose.position.y);
+
+      return transformed_pose;
+    };
+
+    // RCLCPP_INFO(logger_, "local (x=%.2f, y=%.2f)",
+    //             transformed_pose.pose.position.x, transformed_pose.pose.position.y);
+
+    return stamped_pose;
+  }
+
+  nav_msgs::msg::Path Acel_pure_pursuit::transformGlobalPlan(
+      const geometry_msgs::msg::PoseStamped &pose)
+  {
+    // Original mplementation taken fron nav2_dwb_controller
+
+    if (global_plan_.poses.empty())
+    {
+      throw nav2_core::PlannerException("Received plan with zero length");
+    }
+
+    // let's get the pose of the robot in the frame of the plan
+    geometry_msgs::msg::PoseStamped robot_pose;
+    if (!transformPose(
+            tf_, global_plan_.header.frame_id, pose,
+            robot_pose, transform_tolerance_))
+    {
+      throw nav2_core::PlannerException("Unable to transform robot pose into global plan's frame");
+    }
+
+    // RCLCPP_INFO(logger_, "Robot position in global frame: x=%.2f, y=%.2f",
+    //             robot_pose.pose.position.x, robot_pose.pose.position.y);
+
+    // We'll discard points on the plan that are outside the local costmap
+    nav2_costmap_2d::Costmap2D *costmap = costmap_ros_->getCostmap();
+    double dist_threshold = std::max(costmap->getSizeInCellsX(), costmap->getSizeInCellsY()) *
+                            costmap->getResolution() / 2.0;
+
+    // First find the closest pose on the path to the robot
+    auto transformation_begin =
+        min_by(
+            global_plan_.poses.begin(), global_plan_.poses.end(),
+            [&robot_pose](const geometry_msgs::msg::PoseStamped &ps)
+            {
+              return euclidean_distance(robot_pose, ps);
+            });
+    // RCLCPP_INFO(logger_, "Closest pose to robot: x=%.2f, y=%.2f",
+    //             transformation_begin->pose.position.x, transformation_begin->pose.position.y);
+
+    // From the closest point, look for the first point that's further then dist_threshold from the
+    // robot. These points are definitely outside of the costmap so we won't transform them.
+    auto transformation_end = std::find_if(
+        transformation_begin, end(global_plan_.poses),
+        [&](const auto &global_plan_pose)
+        {
+          return euclidean_distance(robot_pose, global_plan_pose) > dist_threshold;
+        });
+
+    // Helper function for the transform below. Transforms a PoseStamped from global frame to local
     auto transformGlobalPoseToLocal = [&](const auto &global_plan_pose)
     {
       // We took a copy of the pose, let's lookup the transform at the current time
@@ -220,6 +331,10 @@ namespace acel_pure_pursuit
       transformPose(
           tf_, costmap_ros_->getBaseFrameID(),
           stamped_pose, transformed_pose, transform_tolerance_);
+      RCLCPP_INFO(logger_, "Transformed pose: global (x=%.2f, y=%.2f) -> local (x=%.2f, y=%.2f)",
+                  global_plan_pose.pose.position.x, global_plan_pose.pose.position.y,
+                  transformed_pose.pose.position.x, transformed_pose.pose.position.y);
+
       return transformed_pose;
     };
 

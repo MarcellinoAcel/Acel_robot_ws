@@ -12,7 +12,8 @@
                 "/opt/ros/humble/include/rclcpp/**",
                 "/usr/local/include/**",
                 "${workspaceFolder}/bv_nav/include/**",
-                "${workspaceFolder}/acel_controller/include/**"
+                "${workspaceFolder}/acel_controller/include/**",
+                "${workspaceFolder}/base_controller/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/g++",

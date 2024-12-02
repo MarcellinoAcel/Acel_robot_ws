@@ -9,11 +9,42 @@
 #include "rclcpp/rclcpp.hpp"
 #include "pluginlib/class_loader.hpp"
 #include "pluginlib/class_list_macros.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
+#include "geometry_msgs/msg/pose2_d.hpp"
 
 namespace acel_pure_pursuit
 {
     class Acel_pure_pursuit : public nav2_core::Controller
     {
+    private:
+        struct e
+        {
+            float x;
+            float y;
+            float theta;
+            float distance;
+            float angle;
+        } error;
+
+        struct c
+        {
+            float distance;
+            float angle;
+        } controlled;
+
+        rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_amcl_;
+
+        rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr pub_goal;
+
+        geometry_msgs::msg::PoseWithCovarianceStamped current_pose_;
+
+        std::mutex pose_mutex_;
+        void robot_pose(const geometry_msgs::msg::PoseWithCovarianceStamped &msg)
+        {
+            std::lock_guard<std::mutex> lock(pose_mutex_);
+            current_pose_ = msg;
+        }
+
     public:
         Acel_pure_pursuit() = default;
         ~Acel_pure_pursuit() override = default;
@@ -35,6 +66,9 @@ namespace acel_pure_pursuit
 
         void setPlan(const nav_msgs::msg::Path &path) override;
 
+        geometry_msgs::msg::PoseStamped transformGlobalPoseToLocal(
+            const geometry_msgs::msg::PoseStamped &pose);
+
     protected:
         nav_msgs::msg::Path transformGlobalPlan(const geometry_msgs::msg::PoseStamped &pose);
         bool transformPose(
@@ -52,6 +86,12 @@ namespace acel_pure_pursuit
         rclcpp::Clock::SharedPtr clock_;
 
         double desired_linear_vel_;
+        struct param
+        {
+            float kp;
+            float ki;
+            float kd;
+        } parameters;
         double lookahead_dist_;
         double max_angular_vel_;
         rclcpp::Duration transform_tolerance_{0, 0};
