@@ -132,9 +132,9 @@ controller_server:
       debug_trajectory_details: True
       desired_linear_vel: 5.0
       lookahead_dist: 8.0
-      max_angular_vel: 3.0
+      max_angular_vel: 5.0
       transform_tolerance: 1.0
-      kp: 1.5
+      kp: 3.5
       ki: 0.0
       kd: 0.0
     # FollowPath:
@@ -413,11 +413,11 @@ velocity_smoother:
   ros__parameters:
     smoothing_frequency: 20.0
     scale_velocities: False
-    feedback: "CLOSED_LOOP"
+    feedback: "OPEN_LOOP"
     max_velocity: [1.5, 1.5, 2.5]
     min_velocity: [-1.5, -1.5, -2.5]
-    max_accel: [2.5, 2.5, 3.2]
-    max_decel: [-2.5, -2.5, -3.2]
+    max_accel: [5.5, 5.5, 6.2]
+    max_decel: [-5.5, -5.5, -6.2]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
