@@ -16,6 +16,8 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
 
 nav2_package()
 
@@ -33,6 +35,8 @@ set(dependencies
   nav2_util
   nav2_core
   tf2
+  std_msgs
+  nav_msgs
 )
 
 add_library(acel_controller SHARED

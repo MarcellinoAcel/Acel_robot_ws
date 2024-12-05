@@ -14,6 +14,12 @@
 #include "acel_controller/pid.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "icecream.hpp"
+
+#include "std_msgs/msg/float32_multi_array.hpp"
+#include "std_msgs/msg/float32.hpp"
+
+#include "nav_msgs/msg/odometry.hpp"
+
 using namespace std;
 
 using nav2_util::declare_parameter_if_not_declared;
@@ -23,7 +29,8 @@ using std::hypot;
 using std::max;
 using std::min;
 using std::placeholders::_1;
-PID omni;
+PID omni_linear;
+PID omni_angular;
 Convertion convert;
 
 namespace acel_pure_pursuit
@@ -95,6 +102,15 @@ namespace acel_pure_pursuit
     sub_amcl_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "amcl_pose", 10, std::bind(&Acel_pure_pursuit::robot_pose, this, std::placeholders::_1));
     pub_goal = node->create_publisher<geometry_msgs::msg::Pose2D>("checking_goal", 1);
+    error_pub = node->create_publisher<std_msgs::msg::Float32MultiArray>("data_for_regres", 1);
+    error_ = node->create_publisher<std_msgs::msg::Float32>("error2tune", 1);
+    control_effort = node->create_publisher<std_msgs::msg::Float32>("controlled2tune", 1);
+
+    sub_parameters_pid = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+        "pid_parameters", 10, std::bind(&Acel_pure_pursuit::pid_parameters, this, std::placeholders::_1));
+
+    robot_sub_speed = node->create_subscription<nav_msgs::msg::Odometry>(
+        "odom", 10, std::bind(&Acel_pure_pursuit::robot_speed, this, std::placeholders::_1));
   }
 
   void Acel_pure_pursuit::cleanup()
@@ -130,19 +146,14 @@ namespace acel_pure_pursuit
     (void)percentage;
   }
 
-  geometry_msgs::msg::TwistStamped Acel_pure_pursuit::computeVelocityCommands(
-      const geometry_msgs::msg::PoseStamped &pose,
-      const geometry_msgs::msg::Twist &velocity,
-      nav2_core::GoalChecker *goal_checker)
+  geometry_msgs::msg::TwistStamped Acel_pure_pursuit::computeVelocityCommands(const geometry_msgs::msg::PoseStamped &pose, const geometry_msgs::msg::Twist &velocity, nav2_core::GoalChecker *goal_checker)
   {
-    auto amcl_pose_ = current_pose_;
+
     auto goal_pose_msg = geometry_msgs::msg::Pose2D();
     (void)velocity;
     (void)goal_checker;
 
-    auto transformed_plan = transformGlobalPlan(pose);
-    auto transformed_goal_pose = transformGlobalPoseToLocal(pose);
-    auto global_goal_pose = transformed_goal_pose;
+    auto transformed_plan = transformGlobalPlan(pose); // from original tutorial
 
     // Find the first pose which is at a distance greater than the specified lookahed distance
     auto goal_pose_it = std::find_if(
@@ -154,51 +165,59 @@ namespace acel_pure_pursuit
     {
       goal_pose_it = std::prev(transformed_plan.poses.end());
     }
-    // auto goal_pose = goal_pose_it->pose;
+    auto goal_pose = goal_pose_it->pose;
+
+    auto curvature = 2.0 * goal_pose.position.y /
+                     (goal_pose.position.x * goal_pose.position.x + goal_pose.position.y * goal_pose.position.y);
+
+    double angular_vel = desired_linear_vel_ * curvature;
+
+    // ________________________________________________________________________________ //
     Convertion::Quaternion goal_q = {
-        global_goal_pose.pose.orientation.w,
-        global_goal_pose.pose.orientation.x,
-        global_goal_pose.pose.orientation.y,
-        global_goal_pose.pose.orientation.z,
+        goal_pose.orientation.w,
+        goal_pose.orientation.x,
+        goal_pose.orientation.y,
+        goal_pose.orientation.z,
     };
 
     double goal_yaw, goal_pitch, goal_roll;
     convert.quat_to_eular(goal_q, goal_yaw, goal_pitch, goal_roll);
 
-    Convertion::Quaternion robot_q = {
-        amcl_pose_.pose.pose.orientation.w,
-        amcl_pose_.pose.pose.orientation.x,
-        amcl_pose_.pose.pose.orientation.y,
-        amcl_pose_.pose.pose.orientation.z,
-    };
-    double robot_yaw, robot_pitch, robot_roll;
-    convert.quat_to_eular(robot_q, robot_yaw, robot_pitch, robot_roll);
-    error.x = global_goal_pose.pose.position.x - amcl_pose_.pose.pose.position.x;
-    error.y = global_goal_pose.pose.position.y - amcl_pose_.pose.pose.position.y;
-    error.theta = goal_yaw - robot_yaw;
+    error.x = goal_pose.position.x - current_robot_speed.twist.twist.linear.x;
+    error.y = goal_pose.position.y - current_robot_speed.twist.twist.linear.y;
+    error.theta = angular_vel - current_robot_speed.twist.twist.angular.z;
     error.distance = hypot(error.x, error.y);
     error.angle = atan2(error.y, error.x);
-    // IC(goal_pose.position.x, goal_pose.position.y);
 
-    omni.setBaseParam(parameters.kp, parameters.kp, parameters.kp);
-    omni.setHeadingParam(parameters.kp, parameters.kp, parameters.kp);
+    omni_linear.setBaseParam(parameters.kp, parameters.ki, parameters.kd);
+    omni_angular.setBaseParam(parameters.kp, parameters.ki, parameters.kd);
 
-    controlled.distance = omni.control_base(error.distance, desired_linear_vel_, 0);
-    controlled.angle = omni.control_base(error.angle, max_angular_vel_, 1);
+    controlled.distance = omni_linear.control_base_(error.distance, desired_linear_vel_);
+    controlled.angle = omni_angular.control_base_(error.theta, max_angular_vel_);
 
-    goal_pose_msg.x = global_goal_pose.pose.position.x;
-    goal_pose_msg.y = global_goal_pose.pose.position.y;
+    auto error2tune = std_msgs::msg::Float32();
+    error2tune.data = error.distance;
+    error_->publish(error2tune);
+    auto control2tune = std_msgs::msg::Float32();
+    control2tune.data = omni_linear.getU();
+    control_effort->publish(control2tune);
+
+    goal_pose_msg.x = goal_pose.position.x;
+    goal_pose_msg.y = goal_pose.position.y;
     goal_pose_msg.theta = goal_yaw;
 
     pub_goal->publish(goal_pose_msg);
+    RCLCPP_INFO(logger_, "%f, %f, %f, ", goal_pose.position.x, goal_pose.position.y, goal_yaw);
+
+    // _____________________________________ //
 
     geometry_msgs::msg::TwistStamped cmd_vel;
     cmd_vel.header.frame_id = pose.header.frame_id;
     cmd_vel.header.stamp = clock_->now();
-    // -----------------------------------------------------------
+    // ________________________________________________________________________________________
     cmd_vel.twist.linear.x = controlled.distance * cos(error.angle);
     cmd_vel.twist.linear.y = controlled.distance * sin(error.angle);
-    cmd_vel.twist.linear.z = 0;
+    cmd_vel.twist.linear.z = controlled.angle;
 
     return cmd_vel;
   }
@@ -209,72 +228,7 @@ namespace acel_pure_pursuit
     global_plan_ = path;
   }
 
-  geometry_msgs::msg::PoseStamped Acel_pure_pursuit::transformGlobalPoseToLocal(
-      const geometry_msgs::msg::PoseStamped &pose)
-  {
-    if (global_plan_.poses.empty())
-    {
-      throw nav2_core::PlannerException("Received plan with zero length");
-    }
-
-    // let's get the pose of the robot in the frame of the plan
-    geometry_msgs::msg::PoseStamped robot_pose;
-    if (!transformPose(
-            tf_, global_plan_.header.frame_id, pose,
-            robot_pose, transform_tolerance_))
-    {
-      throw nav2_core::PlannerException("Unable to transform robot pose into global plan's frame");
-    }
-
-    // We'll discard points on the plan that are outside the local costmap
-    nav2_costmap_2d::Costmap2D *costmap = costmap_ros_->getCostmap();
-    double dist_threshold = std::max(costmap->getSizeInCellsX(), costmap->getSizeInCellsY()) *
-                            costmap->getResolution() / 2.0;
-
-    // First find the closest pose on the path to the robot
-    auto transformation_begin =
-        min_by(
-            global_plan_.poses.begin(), global_plan_.poses.end(),
-            [&robot_pose](const geometry_msgs::msg::PoseStamped &ps)
-            {
-              return euclidean_distance(robot_pose, ps);
-            });
-
-    // From the closest point, look for the first point that's further then dist_threshold from the
-    // robot. These points are definitely outside of the costmap so we won't transform them.
-    auto transformation_end = std::find_if(
-        transformation_begin, end(global_plan_.poses),
-        [&](const auto &global_plan_pose)
-        {
-          return euclidean_distance(robot_pose, global_plan_pose) > dist_threshold;
-        });
-
-    // Helper function for the transform below. Transforms a PoseStamped from global frame to local
-    geometry_msgs::msg::PoseStamped stamped_pose, transformed_pose;
-    auto transformGlobalPoseToLocal = [&](const auto &global_plan_pose)
-    {
-      // We took a copy of the pose, let's lookup the transform at the current time
-      stamped_pose.header.frame_id = global_plan_.header.frame_id;
-      stamped_pose.header.stamp = pose.header.stamp;
-      stamped_pose.pose = global_plan_pose.pose;
-      transformPose(
-          tf_, costmap_ros_->getBaseFrameID(),
-          stamped_pose, transformed_pose, transform_tolerance_);
-      // RCLCPP_INFO(logger_, "Transformed pose: global (x=%.2f, y=%.2f) -> local (x=%.2f, y=%.2f)",
-      //             global_plan_pose.pose.position.x, global_plan_pose.pose.position.y,
-      //             transformed_pose.pose.position.x, transformed_pose.pose.position.y);
-
-      return transformed_pose;
-    };
-
-    // RCLCPP_INFO(logger_, "local (x=%.2f, y=%.2f)",
-    //             transformed_pose.pose.position.x, transformed_pose.pose.position.y);
-
-    return stamped_pose;
-  }
-
-  nav_msgs::msg::Path Acel_pure_pursuit::transformGlobalPlan(
-      const geometry_msgs::msg::PoseStamped &pose)
+  nav_msgs::msg::Path Acel_pure_pursuit::transformGlobalPlan(const geometry_msgs::msg::PoseStamped &pose)
   {
     // Original mplementation taken fron nav2_dwb_controller
 
@@ -331,9 +285,9 @@ namespace acel_pure_pursuit
       transformPose(
           tf_, costmap_ros_->getBaseFrameID(),
           stamped_pose, transformed_pose, transform_tolerance_);
-      RCLCPP_INFO(logger_, "Transformed pose: global (x=%.2f, y=%.2f) -> local (x=%.2f, y=%.2f)",
-                  global_plan_pose.pose.position.x, global_plan_pose.pose.position.y,
-                  transformed_pose.pose.position.x, transformed_pose.pose.position.y);
+      // RCLCPP_INFO(logger_, "global (x=%.2f, y=%.2f) -> local (x=%.2f, y=%.2f)",
+      //             global_plan_pose.pose.position.x, global_plan_pose.pose.position.y,
+      //             transformed_pose.pose.position.x, transformed_pose.pose.position.y);
 
       return transformed_pose;
     };

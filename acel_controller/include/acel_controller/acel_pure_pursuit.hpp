@@ -12,6 +12,11 @@
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/pose2_d.hpp"
 
+#include "std_msgs/msg/float32_multi_array.hpp"
+#include "std_msgs/msg/float32.hpp"
+
+#include "nav_msgs/msg/odometry.hpp"
+
 namespace acel_pure_pursuit
 {
     class Acel_pure_pursuit : public nav2_core::Controller
@@ -31,12 +36,30 @@ namespace acel_pure_pursuit
             float distance;
             float angle;
         } controlled;
+        struct param_constant{
+            float kp;
+            float ki;
+            float kd;
+        }params;
+
+        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr robot_sub_speed;   
 
         rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_amcl_;
 
+
         rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr pub_goal;
 
+        rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr error_pub;
+
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr error_;
+
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr control_effort;
+
         geometry_msgs::msg::PoseWithCovarianceStamped current_pose_;
+        nav_msgs::msg::Odometry current_robot_speed;
+
+        rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr pub_pose_inline;
+        geometry_msgs::msg::PoseWithCovarianceStamped msg_pose_inline;
 
         std::mutex pose_mutex_;
         void robot_pose(const geometry_msgs::msg::PoseWithCovarianceStamped &msg)
@@ -44,7 +67,16 @@ namespace acel_pure_pursuit
             std::lock_guard<std::mutex> lock(pose_mutex_);
             current_pose_ = msg;
         }
-
+        void robot_speed(const nav_msgs::msg::Odometry &msg){
+            std::lock_guard<std::mutex> lock(pose_mutex_);
+            current_robot_speed = msg;
+        }
+        rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr sub_parameters_pid;
+        void pid_parameters(const std_msgs::msg::Float32MultiArray &msg){
+            params.kp = msg.data[0];
+            params.ki = msg.data[1];
+            params.kd = msg.data[2];
+        }
     public:
         Acel_pure_pursuit() = default;
         ~Acel_pure_pursuit() override = default;
