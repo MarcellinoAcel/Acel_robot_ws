@@ -2,6 +2,7 @@ import sys
 import pygame
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32
 import rclpy
 from rclpy.node import Node
 
@@ -11,6 +12,7 @@ class GamePad(Node):
         
         self.publisher_axis = self.create_publisher(Twist, 'cmd_vel_joy', 10)
         self.publisher_button = self.create_publisher(Int32MultiArray, 'button', 10)
+        self.publisher_micros = self.create_publisher(Int32,'button_micros',10)
         
         pygame.init()
         pygame.joystick.init()
@@ -30,12 +32,15 @@ class GamePad(Node):
 
         self.create_timer(0.1, self.axis_callback)
         self.create_timer(0.1, self.button_callback)
+        self.create_timer(0.1, self.micro_callback)
 
     def button_callback(self):
         pygame.event.pump()
 
         msg = Int32MultiArray()
         button_states = []
+        button_status = [self.joystick.get_button(i) for i in range(self.joystick.get_numbuttons())]
+        hat_states = [self.joystick.get_hat(i) for i in range(self.joystick.get_numhats())]
 
         for i in range(self.joystick.get_numbuttons()):
             button_states.append(self.joystick.get_button(i))
@@ -43,7 +48,8 @@ class GamePad(Node):
         msg.data = button_states
         self.publisher_button.publish(msg)
         self.get_logger().info(f'\ncurrent speed : {self.speed}\n')
-        # self.get_logger().info(f'Publishing button states: {msg.data}')
+        # self.get_logger().info(f'Publishing button states: {button_status}')
+        # self.get_logger().info(f"Hat States: {hat_states}")
 
     def axis_callback(self):
         pygame.event.pump()
@@ -90,6 +96,13 @@ class GamePad(Node):
         self.get_logger().info(f"\nCurrent speed: {self.joystick.get_axis}")
 
 
+    def micro_callback(self):
+        pygame.event.pump()
+
+        msg = Int32()
+        msg.data = self.joystick.get_button(9)
+
+        self.publisher_micros.publish(msg)
 def main(args=None):
     rclpy.init(args=args)
 
