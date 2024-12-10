@@ -111,6 +111,9 @@ namespace acel_pure_pursuit
 
     robot_sub_speed = node->create_subscription<nav_msgs::msg::Odometry>(
         "odom", 10, std::bind(&Acel_pure_pursuit::robot_speed, this, std::placeholders::_1));
+
+    sub_amcl_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+        "amcl_pose", 10, std::bind(&Acel_pure_pursuit::robot_pose, this, std::placeholders::_1));
   }
 
   void Acel_pure_pursuit::cleanup()
@@ -167,25 +170,34 @@ namespace acel_pure_pursuit
     }
     auto goal_pose = goal_pose_it->pose;
 
-    auto curvature = 2.0 * goal_pose.position.y /
-                     (goal_pose.position.x * goal_pose.position.x + goal_pose.position.y * goal_pose.position.y);
+    // auto curvature = 2.0 * goal_pose.position.y /
+    //                  (goal_pose.position.x * goal_pose.position.x + goal_pose.position.y * goal_pose.position.y);
 
-    double angular_vel = desired_linear_vel_ * curvature;
+    // double angular_vel = desired_linear_vel_ * curvature;
 
     // ________________________________________________________________________________ //
     Convertion::Quaternion goal_q = {
         goal_pose.orientation.w,
         goal_pose.orientation.x,
         goal_pose.orientation.y,
-        goal_pose.orientation.z,
-    };
-
+        goal_pose.orientation.z};
     double goal_yaw, goal_pitch, goal_roll;
     convert.quat_to_eular(goal_q, goal_yaw, goal_pitch, goal_roll);
 
-    error.x = goal_pose.position.x - current_robot_speed.twist.twist.linear.x;
-    error.y = goal_pose.position.y - current_robot_speed.twist.twist.linear.y;
-    error.theta = angular_vel - current_robot_speed.twist.twist.angular.z;
+    Convertion::Quaternion current_q = {
+        current_pose_.pose.pose.orientation.w,
+        current_pose_.pose.pose.orientation.x,
+        current_pose_.pose.pose.orientation.y,
+        current_pose_.pose.pose.orientation.z};
+    double current_yaw, current_pitch, current_roll;
+    convert.quat_to_eular(current_q, current_yaw, current_pitch, current_roll);
+
+    // float target_x = goal_pose.position.x + current_pose_.pose.pose.position.x;
+    // float target_y = goal_pose.position.y + current_pose_.pose.pose.position.y;
+    // float target_yaw = goal_yaw + current_yaw;
+    error.x = goal_pose.position.x;
+    error.y = goal_pose.position.y;
+    error.theta = goal_yaw;
     error.distance = hypot(error.x, error.y);
     error.angle = atan2(error.y, error.x);
 
