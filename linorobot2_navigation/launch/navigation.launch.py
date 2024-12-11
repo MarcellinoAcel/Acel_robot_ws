@@ -24,7 +24,7 @@ from launch_ros.actions import Node
 from launch.conditions import IfCondition, UnlessCondition
 from launch.actions import TimerAction
 
-MAP_NAME='playground' #change to the name of your own map here
+MAP_NAME='current_map' #change to the name of your own map here
 
 def generate_launch_description():
     depth_sensor = os.getenv('LINOROBOT2_DEPTH_SENSOR', '')
@@ -54,7 +54,7 @@ def generate_launch_description():
         [FindPackageShare('linorobot2_navigation'), 'maps', 'playground.yaml']
     )
     default_map_path_trial = PathJoinSubstitution(
-        [FindPackageShare('linorobot2_navigation'), 'maps', 'current_map.yaml']
+        [FindPackageShare('linorobot2_navigation'), 'maps', f'{MAP_NAME}.yaml']
     )
     default_map_path_regional = PathJoinSubstitution(
         [FindPackageShare('linorobot2_navigation'), 'maps', 'lapangan.yaml']
@@ -83,7 +83,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='map', 
-            default_value=map_file,
+            default_value=default_map_path_trial,
             description='Navigation map path'
         ),
 
