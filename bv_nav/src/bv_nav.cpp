@@ -100,7 +100,7 @@ public:
         }
         else if (but.Y)
         {
-            send_goal(2, 5, 0);
+            send_goal(3, 2, 0);
         }
     }
 
