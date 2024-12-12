@@ -195,7 +195,7 @@ global_costmap:
       publish_frequency: 5.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.22 # radius set and used, so no footprint points
+      robot_radius: 0.70710678119 # radius set and used, so no footprint points
       resolution: 0.01
       plugins: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer"]
       obstacle_layer:
@@ -281,7 +281,7 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.01
-      robot_radius: 0.22 # radius set and used, so no footprint points
+      robot_radius: 0.70710678119 # radius set and used, so no footprint points
       resolution: 0.01
       plugins: ["obstacle_layer", "voxel_layer", "inflation_layer"]
       obstacle_layer:
