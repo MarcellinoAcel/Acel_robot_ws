@@ -5,6 +5,7 @@ from std_msgs.msg import Int32MultiArray
 from std_msgs.msg import Int32
 import rclpy
 from rclpy.node import Node
+import time
 
 class GamePad(Node):
     def __init__(self):
@@ -17,12 +18,8 @@ class GamePad(Node):
         pygame.init()
         pygame.joystick.init()
 
-        if pygame.joystick.get_count() == 0:
-            self.get_logger().error("No joystick connected.")
-            sys.exit(1)
+        self.connect_joystick()
 
-        self.joystick = pygame.joystick.Joystick(0)
-        self.joystick.init()
 
         self.get_logger().info(f"Controller connected: {self.joystick.get_name()}")
 
@@ -34,6 +31,28 @@ class GamePad(Node):
         self.create_timer(0.1, self.button_callback)
         self.create_timer(0.1, self.micro_callback)
 
+    def connect_joystick(self):
+        """Attempts to connect to the joystick. Retries if not available."""
+        while True:
+            pygame.joystick.quit()
+            pygame.joystick.init()
+            if pygame.joystick.get_count() > 0:
+                self.joystick = pygame.joystick.Joystick(0)
+                self.joystick.init()
+                self.get_logger().info(f"Controller connected: {self.joystick.get_name()}")
+                break
+            else:
+                self.get_logger().warn("No joystick connected. Retrying in 2 seconds...")
+                time.sleep(2)
+
+    def check_joystick_connection(self):
+        """Checks if the joystick is still connected and attempts to reconnect if necessary."""
+        try:
+            self.joystick.get_name()  # Will throw an exception if disconnected
+        except pygame.error:
+            self.get_logger().warn("Joystick disconnected. Attempting to reconnect...")
+            self.connect_joystick()
+            
     def button_callback(self):
         pygame.event.pump()
 

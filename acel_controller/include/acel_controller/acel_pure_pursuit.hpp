@@ -14,6 +14,7 @@
 
 #include "std_msgs/msg/float32_multi_array.hpp"
 #include "std_msgs/msg/float32.hpp"
+#include "std_msgs/msg/int32.hpp"
 
 #include "nav_msgs/msg/odometry.hpp"
 
@@ -30,53 +31,57 @@ namespace acel_pure_pursuit
             float distance;
             float angle;
         } error;
-
         struct c
         {
             float distance;
             float angle;
         } controlled;
-        struct param_constant{
+        struct param_constant
+        {
             float kp;
             float ki;
             float kd;
-        }params;
-
-        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr robot_sub_speed;   
+        } params;
+        //---------------------------------------------------------------------------------------//
+        std::mutex pose_mutex_;
+        //---------------------------------------------------------------------------------------//
+        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
+        nav_msgs::msg::Odometry odom_robot_msg;
+        
+        rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr sub_movement_mode;
+        std_msgs::msg::Float32 msg_movement_mode;
 
         rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_amcl_;
-
-
+        geometry_msgs::msg::PoseWithCovarianceStamped current_pose_;
+        //---------------------------------------------------------------------------------------//
         rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr pub_goal;
 
-        rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr error_pub;
+        rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr debug_pub;
 
         rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr error_;
 
         rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr control_effort;
 
-        geometry_msgs::msg::PoseWithCovarianceStamped current_pose_;
-        nav_msgs::msg::Odometry current_robot_speed;
-
         rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr pub_pose_inline;
-        geometry_msgs::msg::PoseWithCovarianceStamped msg_pose_inline;
+        
+        //---------------------------------------------------------------------------------------//
+        void movement_call(const std_msgs::msg::Float32 &msg){
+            std::lock_guard<std::mutex> lock(pose_mutex_);
+            msg_movement_mode = msg;
+        }
 
-        std::mutex pose_mutex_;
         void robot_pose(const geometry_msgs::msg::PoseWithCovarianceStamped &msg)
         {
             std::lock_guard<std::mutex> lock(pose_mutex_);
             current_pose_ = msg;
         }
-        void robot_speed(const nav_msgs::msg::Odometry &msg){
+
+        void odom_robot_callback(const nav_msgs::msg::Odometry &msg)
+        {
             std::lock_guard<std::mutex> lock(pose_mutex_);
-            current_robot_speed = msg;
+            odom_robot_msg = msg;
         }
-        rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr sub_parameters_pid;
-        void pid_parameters(const std_msgs::msg::Float32MultiArray &msg){
-            params.kp = msg.data[0];
-            params.ki = msg.data[1];
-            params.kd = msg.data[2];
-        }
+
     public:
         Acel_pure_pursuit() = default;
         ~Acel_pure_pursuit() override = default;

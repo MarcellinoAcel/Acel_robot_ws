@@ -2,16 +2,16 @@
 class Convertion
 {
 private:
-    
+    #define M_PI 3.14159265358979323846
 public:
     
     float toDeg(float radian)
     {
         return radian * 180 / M_PI;
     }
-    float toRad(float radian)
+    float toRad(float degree)
     {
-        return radian * M_PI / 180;
+        return degree * M_PI / 180;
     }
     struct Quaternion
     {

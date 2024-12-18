@@ -13,12 +13,13 @@
                 "/usr/local/include/**",
                 "${workspaceFolder}/bv_nav/include/**",
                 "${workspaceFolder}/acel_controller/include/**",
-                "${workspaceFolder}/base_controller/include"
+                "${workspaceFolder}/acel_vel_smoother/include/**",
+                "/opt/ros/humble/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c17",
-            "cppStandard": "c++14",
+            "cppStandard": "c++17",
             "intelliSenseMode": "linux-clang-x64"
         }
     ],

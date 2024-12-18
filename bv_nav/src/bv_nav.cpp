@@ -3,8 +3,9 @@
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "geometry_msgs/msg/pose2_d.hpp"
 #include "std_msgs/msg/int32_multi_array.hpp"
+#include "std_msgs/msg/int32.hpp"
+#include "std_msgs/msg/float32.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-#include <icecream.hpp>
 #include "bv_nav/convertion.hpp"
 using std::placeholders::_1;
 
@@ -15,11 +16,11 @@ public:
     Bv_nav() : Node("bv_nav")
     {
 
-        this->client_ptr_ = rclcpp_action::create_client<NavigateToPose>(
+        this->client_ptr_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(
             this,
             "navigate_to_pose");
 
-        this->subscription_button_ = this->create_subscription<std_msgs::msg::Int32MultiArray>(
+        this->button_sub = this->create_subscription<std_msgs::msg::Int32MultiArray>(
             "button", 10, std::bind(&Bv_nav::sign_callback, this, std::placeholders::_1));
 
         RCLCPP_INFO(this->get_logger(), "Subscribed to /button");
@@ -34,6 +35,10 @@ public:
 
         sub_amcl = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
             "amcl_pose", 10, std::bind(&Bv_nav::robot_pose, this, _1));
+
+        pub_cmd_auto = this->create_publisher<std_msgs::msg::Int32>("cmd_dribble", 10);
+
+        pub_movement_mode = this->create_publisher<std_msgs::msg::Float32>("movement_mode", 10);
     }
 
     void send_goal(double x, double y, double theta)
@@ -46,7 +51,7 @@ public:
             return;
         }
 
-        auto goal_msg = NavigateToPose::Goal();
+        auto goal_msg = nav2_msgs::action::NavigateToPose::Goal();
         goal_msg.pose.pose.position.x = x;
         goal_msg.pose.pose.position.y = y;
         goal_msg.pose.pose.orientation.z = theta; // Set quaternion based on your needs
@@ -54,12 +59,16 @@ public:
 
         RCLCPP_INFO(this->get_logger(), "Sending goal");
 
-        auto send_goal_options = rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
+        auto send_goal_options = rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SendGoalOptions();
         send_goal_options.goal_response_callback =
             std::bind(&Bv_nav::goal_response_callback, this, _1);
         send_goal_options.result_callback =
             std::bind(&Bv_nav::get_result_callback, this, _1);
         this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
+
+        auto move_mode = std_msgs::msg::Float32();
+        move_mode.data = theta;
+        pub_movement_mode->publish(move_mode);
     }
 
     void robot_pose(const geometry_msgs::msg::PoseWithCovarianceStamped &msg)
@@ -73,39 +82,60 @@ public:
         double yaw, pitch, roll;
         conv.quat_to_eular(q, yaw, pitch, roll);
 
+        auto cmd_auto_msg = std_msgs::msg::Int32();
+        if (fabs(msg.pose.pose.position.x) < 0.3 && fabs(yaw) < 1)
+        {
+            cmd_auto_msg.data = 1;
+        }
+        else
+        {
+            cmd_auto_msg.data = 0;
+        }
+
+        pub_cmd_auto->publish(cmd_auto_msg);
+
         auto robot_pose = geometry_msgs::msg::Pose2D();
         robot_pose.x = msg.pose.pose.position.x;
         robot_pose.y = msg.pose.pose.position.y;
         robot_pose.theta = conv.toDeg(yaw);
 
         pub_pose->publish(robot_pose);
-
-        // IC(msg.pose.pose.position.x, msg.pose.pose.position.y, conv.toDeg(yaw));
     }
 
     void sign_callback(const std_msgs::msg::Int32MultiArray &msg)
     {
-        button but;
-        but.A = msg.data[0];
-        but.Y = msg.data[4];
-        but.X = msg.data[3];
+        button.A = msg.data[0];
+        button.B = msg.data[1];
+        button.X = msg.data[3];
+        button.Y = msg.data[4];
+        button.LB = msg.data[6];
+        button.RB = msg.data[7];
+        button.LT = msg.data[8];
+        button.RT = msg.data[9];
+        button.select = msg.data[10];
+        button.start = msg.data[11];
+        button.home = msg.data[12];
 
-        if (but.X)
+        if (button.X)
         {
             client_ptr_->async_cancel_all_goals();
         }
-        else if (but.A)
+        else if (button.A)
         {
-            send_goal(0, 0, 0);
+            send_goal(0, 0, conv.toRad(0));
         }
-        else if (but.Y)
+        else if (button.Y)
         {
-            send_goal(3, 2, 0);
+            send_goal(5, 3, conv.toRad(180));
+        }
+        else if (button.B)
+        {
+            send_goal(7, 0, conv.toRad(270));
         }
     }
 
 private:
-    struct button
+    struct b
     {
         int A;
         int Y;
@@ -122,21 +152,24 @@ private:
         int RB;
         int LB;
         int LT;
-    };
+    } button;
+
+    rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr client_ptr_;
+
     rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr pub_pose;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr pub_cmd_auto;
+    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_movement_mode;
+
     rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr sub_button;
+
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_amcl;
 
-    using NavigateToPose = nav2_msgs::action::NavigateToPose;
-    using GoalHandleNavigateToPose = rclcpp_action::ClientGoalHandle<NavigateToPose>;
-
-    GoalHandleNavigateToPose::SharedPtr goal_handle_;
+    rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr goal_handle_;
     Convertion conv;
 
-    rclcpp_action::Client<NavigateToPose>::SharedPtr client_ptr_;
-    rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr subscription_button_;
+    rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr button_sub;
 
-    void goal_response_callback(const GoalHandleNavigateToPose::SharedPtr &goal_handle)
+    void goal_response_callback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr &goal_handle)
     {
         if (!goal_handle)
         {
@@ -148,7 +181,7 @@ private:
         }
     }
 
-    void get_result_callback(const GoalHandleNavigateToPose::WrappedResult &result)
+    void get_result_callback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::WrappedResult &result)
     {
         switch (result.code)
         {
@@ -171,132 +204,17 @@ private:
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<Bv_nav>();
+    auto robot_nav = std::make_shared<Bv_nav>();
 
     try
     {
-        rclcpp::spin(node);
+        rclcpp::spin(robot_nav);
     }
     catch (const std::exception &e)
     {
-        RCLCPP_ERROR(node->get_logger(), "Exception in node: %s", e.what());
+        RCLCPP_ERROR(robot_nav->get_logger(), "Exception in robot_nav: %s", e.what());
     }
 
     rclcpp::shutdown();
     return 0;
-}
-
-// #include <rclcpp/rclcpp.hpp>
-// #include <rclcpp_action/rclcpp_action.hpp>
-// #include <nav2_msgs/action/navigate_to_pose.hpp>
-// #include <std_msgs/msg/int32_multi_array.hpp>
-// #include <memory>
-// #include <functional>
-
-// class NavigateToPoseClient : public rclcpp::Node
-// {
-// public:
-//     using NavigateToPose = nav2_msgs::action::NavigateToPose;
-//     using GoalHandleNavigateToPose = rclcpp_action::ClientGoalHandle<NavigateToPose>;
-
-//     NavigateToPoseClient() : Node("navigate_to_pose_client")
-//     {
-//         this->client_ptr_ = rclcpp_action::create_client<NavigateToPose>(
-//             this,
-//             "navigate_to_pose");
-
-//         this->subscription_button_ = this->create_subscription<std_msgs::msg::Int32MultiArray>(
-//             "button", 10, std::bind(&NavigateToPoseClient::sign_callback, this, std::placeholders::_1));
-
-//         RCLCPP_INFO(this->get_logger(), "Subscribed to /button");
-//     }
-
-//     void send_goal(double x, double y, double theta)
-//     {
-//         using namespace std::placeholders;
-
-//         if (!this->client_ptr_->wait_for_action_server()) {
-//             RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
-//             return;
-//         }
-
-//         auto goal_msg = NavigateToPose::Goal();
-//         goal_msg.pose.pose.position.x = x;
-//         goal_msg.pose.pose.position.y = y;
-//         goal_msg.pose.pose.orientation.z = theta;  // Set quaternion based on your needs
-//         goal_msg.pose.header.frame_id = "map";
-
-//         RCLCPP_INFO(this->get_logger(), "Sending goal");
-
-//         auto send_goal_options = rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
-//         send_goal_options.goal_response_callback =
-//             std::bind(&NavigateToPoseClient::goal_response_callback, this, _1);
-//         send_goal_options.result_callback =
-//             std::bind(&NavigateToPoseClient::get_result_callback, this, _1);
-//         this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
-//     }
-
-// private:
-//     rclcpp_action::Client<NavigateToPose>::SharedPtr client_ptr_;
-//     rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr subscription_button_;
-
-//     void goal_response_callback(const GoalHandleNavigateToPose::SharedPtr & goal_handle)
-//     {
-//         if (!goal_handle) {
-//             RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-//         } else {
-//             RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
-//         }
-//     }
-
-//     void get_result_callback(const GoalHandleNavigateToPose::WrappedResult & result)
-//     {
-//         switch (result.code) {
-//             case rclcpp_action::ResultCode::SUCCEEDED:
-//                 RCLCPP_INFO(this->get_logger(), "Goal succeeded");
-//                 break;
-//             case rclcpp_action::ResultCode::ABORTED:
-//                 RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
-//                 return;
-//             case rclcpp_action::ResultCode::CANCELED:
-//                 RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
-//                 return;
-//             default:
-//                 RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-//                 return;
-//         }
-//     }
-
-//     void sign_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg)
-//     {
-//         int button_A = msg->data[0];
-//         int button_Y = msg->data[4];
-//         int button_X = msg->data[3];
-
-//         if (button_A) {
-//             RCLCPP_INFO(this->get_logger(), "Button 6 pressed, moving to {0, 0, 0}");
-//             send_goal(0.0, 0.0, 0.0);
-//         } else if (button_Y) {
-//             RCLCPP_INFO(this->get_logger(), "Button Y pressed, moving to {2, 0, 0}");
-//             send_goal(2.0, 0.0, 0.0);
-//         } else if (button_X) {
-//             RCLCPP_INFO(this->get_logger(), "Cancel journey");
-//             // Implement cancel_goal() functionality here
-//         }
-//     }
-// };
-
-// int main(int argc, char ** argv)
-// {
-//     rclcpp::init(argc, argv);
-//     auto node = std::make_shared<NavigateToPoseClient>();
-
-//     try {
-//         rclcpp::spin(node);
-//     } catch (const std::exception & e) {
-//         RCLCPP_ERROR(node->get_logger(), "Exception in node: %s", e.what());
-//     }
-
-//     rclcpp::shutdown();
-//     return 0;
-// }
+};

@@ -32,7 +32,7 @@ def generate_launch_description():
     )
 
     world_path = PathJoinSubstitution(
-        [FindPackageShare("linorobot2_gazebo"), "worlds", "playground.world"]
+        [FindPackageShare("linorobot2_gazebo"), "worlds", "abu_sim_field.world"]
     )
 
     description_launch_path = PathJoinSubstitution(
@@ -73,13 +73,13 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='spawn_x', 
-            default_value='0.0',
+            default_value='-2.011176',
             description='Robot spawn position in X axis'
         ),
 
         DeclareLaunchArgument(
             name='spawn_y', 
-            default_value='0.0',
+            default_value='-6.699749',
             description='Robot spawn position in Y axis'
         ),
 
@@ -91,7 +91,7 @@ def generate_launch_description():
             
         DeclareLaunchArgument(
             name='spawn_yaw', 
-            default_value='0.0',
+            default_value='-1.5708',
             description='Robot spawn heading'
         ),
 
@@ -147,7 +147,7 @@ def generate_launch_description():
             name='twist_mux',
             parameters=[twist_mux_params],
             remappings=[
-                ('cmd_vel_out','cmd_vel')
+                ('cmd_vel_out','cmd_vel_nav')
             ]
         ),
 

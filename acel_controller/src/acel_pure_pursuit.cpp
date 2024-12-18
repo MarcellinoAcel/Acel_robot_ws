@@ -20,6 +20,7 @@
 
 #include "nav_msgs/msg/odometry.hpp"
 
+// #include "cmath"
 using namespace std;
 
 using nav2_util::declare_parameter_if_not_declared;
@@ -56,11 +57,7 @@ namespace acel_pure_pursuit
     return lowest_it;
   }
 
-  void Acel_pure_pursuit::configure(
-      const rclcpp_lifecycle::LifecycleNode::WeakPtr &parent,
-      std::string name,
-      std::shared_ptr<tf2_ros::Buffer> tf,
-      const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
+  void Acel_pure_pursuit::configure(const rclcpp_lifecycle::LifecycleNode::WeakPtr &parent, std::string name, std::shared_ptr<tf2_ros::Buffer> tf, const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
   {
     node_ = parent;
 
@@ -74,46 +71,60 @@ namespace acel_pure_pursuit
 
     declare_parameter_if_not_declared(
         node, plugin_name_ + ".desired_linear_vel", rclcpp::ParameterValue(5.0));
+
     declare_parameter_if_not_declared(
         node, plugin_name_ + ".lookahead_dist",
         rclcpp::ParameterValue(1.0));
+
     declare_parameter_if_not_declared(
         node, plugin_name_ + ".max_angular_vel", rclcpp::ParameterValue(3.0));
+
     declare_parameter_if_not_declared(
         node, plugin_name_ + ".transform_tolerance", rclcpp::ParameterValue(1.0));
+
     declare_parameter_if_not_declared(
         node, plugin_name_ + ".kp", rclcpp::ParameterValue(1.0));
+
     declare_parameter_if_not_declared(
         node, plugin_name_ + ".ki", rclcpp::ParameterValue(0.0));
+
     declare_parameter_if_not_declared(
         node, plugin_name_ + ".kd", rclcpp::ParameterValue(0.0));
 
     node->get_parameter(plugin_name_ + ".kp", parameters.kp);
+
     node->get_parameter(plugin_name_ + ".ki", parameters.ki);
+
     node->get_parameter(plugin_name_ + ".kd", parameters.kd);
+
     node->get_parameter(plugin_name_ + ".desired_linear_vel", desired_linear_vel_);
+
     node->get_parameter(plugin_name_ + ".lookahead_dist", lookahead_dist_);
+
     node->get_parameter(plugin_name_ + ".max_angular_vel", max_angular_vel_);
+
     double transform_tolerance;
     node->get_parameter(plugin_name_ + ".transform_tolerance", transform_tolerance);
+
     transform_tolerance_ = rclcpp::Duration::from_seconds(transform_tolerance);
-
+    //-----------------------------------------------------------------------------------------------------//
     global_pub_ = node->create_publisher<nav_msgs::msg::Path>("received_global_plan", 1);
-    sub_amcl_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-        "amcl_pose", 10, std::bind(&Acel_pure_pursuit::robot_pose, this, std::placeholders::_1));
+
     pub_goal = node->create_publisher<geometry_msgs::msg::Pose2D>("checking_goal", 1);
-    error_pub = node->create_publisher<std_msgs::msg::Float32MultiArray>("data_for_regres", 1);
+
     error_ = node->create_publisher<std_msgs::msg::Float32>("error2tune", 1);
+
     control_effort = node->create_publisher<std_msgs::msg::Float32>("controlled2tune", 1);
-
-    sub_parameters_pid = node->create_subscription<std_msgs::msg::Float32MultiArray>(
-        "pid_parameters", 10, std::bind(&Acel_pure_pursuit::pid_parameters, this, std::placeholders::_1));
-
-    robot_sub_speed = node->create_subscription<nav_msgs::msg::Odometry>(
-        "odom", 10, std::bind(&Acel_pure_pursuit::robot_speed, this, std::placeholders::_1));
-
+    //-----------------------------------------------------------------------------------------------------//
     sub_amcl_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "amcl_pose", 10, std::bind(&Acel_pure_pursuit::robot_pose, this, std::placeholders::_1));
+
+    odom_sub = node->create_subscription<nav_msgs::msg::Odometry>(
+        "odom", 10, std::bind(&Acel_pure_pursuit::odom_robot_callback, this, std::placeholders::_1));
+
+    sub_movement_mode = node->create_subscription<std_msgs::msg::Float32>(
+        "movement_mode", 10, std::bind(&Acel_pure_pursuit::movement_call, this, std::placeholders::_1));
+    //-----------------------------------------------------------------------------------------------------//
   }
 
   void Acel_pure_pursuit::cleanup()
@@ -170,12 +181,7 @@ namespace acel_pure_pursuit
     }
     auto goal_pose = goal_pose_it->pose;
 
-    // auto curvature = 2.0 * goal_pose.position.y /
-    //                  (goal_pose.position.x * goal_pose.position.x + goal_pose.position.y * goal_pose.position.y);
-
-    // double angular_vel = desired_linear_vel_ * curvature;
-
-    // ________________________________________________________________________________ //
+    // --------------------------------------------------------------------------------------------- //
     Convertion::Quaternion goal_q = {
         goal_pose.orientation.w,
         goal_pose.orientation.x,
@@ -184,53 +190,48 @@ namespace acel_pure_pursuit
     double goal_yaw, goal_pitch, goal_roll;
     convert.quat_to_eular(goal_q, goal_yaw, goal_pitch, goal_roll);
 
-    Convertion::Quaternion current_q = {
-        current_pose_.pose.pose.orientation.w,
-        current_pose_.pose.pose.orientation.x,
-        current_pose_.pose.pose.orientation.y,
-        current_pose_.pose.pose.orientation.z};
-    double current_yaw, current_pitch, current_roll;
-    convert.quat_to_eular(current_q, current_yaw, current_pitch, current_roll);
+    Convertion::Quaternion odom_robot_q = {
+        odom_robot_msg.pose.pose.orientation.w,
+        odom_robot_msg.pose.pose.orientation.x,
+        odom_robot_msg.pose.pose.orientation.y,
+        odom_robot_msg.pose.pose.orientation.z};
+    double odom_robot_yaw, odom_robot_pitch, odom_robot_roll;
+    convert.quat_to_eular(odom_robot_q, odom_robot_yaw, odom_robot_pitch, odom_robot_roll);
 
-    // float target_x = goal_pose.position.x + current_pose_.pose.pose.position.x;
-    // float target_y = goal_pose.position.y + current_pose_.pose.pose.position.y;
-    // float target_yaw = goal_yaw + current_yaw;
     error.x = goal_pose.position.x;
     error.y = goal_pose.position.y;
-    error.theta = goal_yaw;
-    error.distance = hypot(error.x, error.y);
+    error.theta = msg_movement_mode.data - odom_robot_yaw;
+    error.distance = sqrt(pow(error.x,2) + pow(error.y,2));
     error.angle = atan2(error.y, error.x);
-
+    if (error.theta > M_PI)
+    {
+      error.theta -= 2 * M_PI;
+    }
+    else if (error.theta < -M_PI)
+    {
+      error.theta += 2 * M_PI;
+    }
     omni_linear.setBaseParam(parameters.kp, parameters.ki, parameters.kd);
     omni_angular.setBaseParam(parameters.kp, parameters.ki, parameters.kd);
 
     controlled.distance = omni_linear.control_base_(error.distance, desired_linear_vel_);
     controlled.angle = omni_angular.control_base_(error.theta, max_angular_vel_);
 
-    auto error2tune = std_msgs::msg::Float32();
-    error2tune.data = error.distance;
-    error_->publish(error2tune);
-    auto control2tune = std_msgs::msg::Float32();
-    control2tune.data = omni_linear.getU();
-    control_effort->publish(control2tune);
-
     goal_pose_msg.x = goal_pose.position.x;
     goal_pose_msg.y = goal_pose.position.y;
     goal_pose_msg.theta = goal_yaw;
 
     pub_goal->publish(goal_pose_msg);
-    RCLCPP_INFO(logger_, "%f, %f, %f, ", goal_pose.position.x, goal_pose.position.y, goal_yaw);
 
-    // _____________________________________ //
+    // ---------------------------------------------------------------------------------------------//
 
     geometry_msgs::msg::TwistStamped cmd_vel;
     cmd_vel.header.frame_id = pose.header.frame_id;
     cmd_vel.header.stamp = clock_->now();
-    // ________________________________________________________________________________________
+    // ---------------------------------------------------------------------------------------------//
     cmd_vel.twist.linear.x = controlled.distance * cos(error.angle);
     cmd_vel.twist.linear.y = controlled.distance * sin(error.angle);
-    cmd_vel.twist.linear.z = controlled.angle;
-
+    cmd_vel.twist.angular.z = controlled.angle;
     return cmd_vel;
   }
 
