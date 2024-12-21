@@ -14,6 +14,7 @@ class GamePad(Node):
         self.publisher_axis = self.create_publisher(Twist, 'cmd_vel_joy', 10)
         self.publisher_button = self.create_publisher(Int32MultiArray, 'button', 10)
         self.publisher_micros = self.create_publisher(Int32,'button_micros',10)
+        self.publisher_catcher = self.create_publisher(Int32,'button_catcher', 10)
         
         pygame.init()
         pygame.joystick.init()
@@ -120,6 +121,10 @@ class GamePad(Node):
 
         msg = Int32()
         msg.data = self.joystick.get_button(9)
+        catch = Int32()
+        catch.data = self.joystick.get_button(8)
+        
+        self.publisher_catcher.publish(catch)
 
         self.publisher_micros.publish(msg)
 def main(args=None):

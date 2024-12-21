@@ -130,16 +130,13 @@ controller_server:
     FollowPath:
       plugin : "acel_pure_pursuit::Acel_pure_pursuit"
       debug_trajectory_details: True
-      desired_linear_vel: 2.4 
+      desired_linear_vel: 1.0 
       lookahead_dist: 4.0
-      max_angular_vel: 12.0
+      max_angular_vel: 0.5
       transform_tolerance: 1.0
-      kp: 58.44550582197724
-      ki: 480.20644424941486
-      kd: 0.04529683700149434
-      # 4.813824087621149, Ki=23.98872266325189, Kd=0.23925746393203662
-      # Kp=10.424790841689399, Ki=48.020643809685964, Kd=0.45305572909231273
-      # 58.44550582197724, Ki=480.20644424941486, Kd=0.04529683700149434
+      kp: 1.0
+      ki: 0.0
+      kd: 0.0
 
     # FollowPath:
     #   plugin: "dwb_core::DWBLocalPlanner"
@@ -418,8 +415,8 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [1.0 , 1.0, 2.5]
-    min_velocity: [-1.0, -1.0, -2.5]
+    max_velocity: [1.0 , 1.0, 0.5]
+    min_velocity: [-1.0, -1.0, -0.5]
     max_accel: [5.5, 5.5, 6.2]
     max_decel: [-5.5, -5.5, -6.2]
     odom_topic: "odom"
