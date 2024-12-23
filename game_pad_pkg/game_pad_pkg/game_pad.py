@@ -15,19 +15,19 @@ class GamePad(Node):
         self.publisher_button = self.create_publisher(Int8MultiArray, 'button', 10)
         self.publisher_micros = self.create_publisher(Int8,'button_micros',10)
         self.publisher_catcher = self.create_publisher(Int8,'button_catcher', 10)
+        self.publisher_allbutton_micros = self.create_publisher(Int8, "allButton", 10)
         
         pygame.init()
         pygame.joystick.init()
 
         self.connect_joystick()
-
+        self.sign = 35
 
         self.get_logger().info(f"Controller connected: {self.joystick.get_name()}")
 
         self.speed = 0.0
         self.button6_pressed = False
         self.button7_pressed = False
-
         self.create_timer(0.1, self.axis_callback)
         self.create_timer(0.1, self.button_callback)
         self.create_timer(0.1, self.micro_callback)
@@ -123,7 +123,18 @@ class GamePad(Node):
         msg.data = self.joystick.get_button(9)
         catch = Int8()
         catch.data = self.joystick.get_button(8)
-        
+        allbutton = Int8()
+        pressed = False 
+        allbutton.data = self.sign
+        for i in range(self.joystick.get_numbuttons()):
+            if(self.joystick.get_button(i)):
+                self.sign = i
+                pressed = True
+                break
+
+        if not pressed:
+            self.sign = 35
+        self.publisher_allbutton_micros.publish(allbutton)
         self.publisher_catcher.publish(catch)
 
         self.publisher_micros.publish(msg)
