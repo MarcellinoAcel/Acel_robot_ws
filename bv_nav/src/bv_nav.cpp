@@ -83,7 +83,7 @@ public:
         conv.quat_to_eular(q, yaw, pitch, roll);
 
         auto cmd_auto_msg = std_msgs::msg::Int32();
-        if (fabs(msg.pose.pose.position.x) < 0.3 && fabs(yaw) < 1)
+        if ((msg.pose.pose.position.x < 5.5 && msg.pose.pose.position.x > 4.5) && fabs(yaw) < 1)
         {
             cmd_auto_msg.data = 1;
         }
@@ -130,7 +130,7 @@ public:
         }
         else if (button.B)
         {
-            send_goal(7, 0, conv.toRad(270));
+            send_goal(7, -3, conv.toRad(0));
         }
     }
 
