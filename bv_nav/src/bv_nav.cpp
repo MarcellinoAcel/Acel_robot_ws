@@ -83,7 +83,9 @@ public:
         conv.quat_to_eular(q, yaw, pitch, roll);
 
         auto cmd_auto_msg = std_msgs::msg::Int8();
-        if ((msg.pose.pose.position.x < 5.5 && msg.pose.pose.position.x > 4.5) && fabs(yaw) < 1)
+        if ((msg.pose.pose.position.x < 3.5 &&
+             msg.pose.pose.position.x > 3.0) &&
+            fabs(conv.toDeg(yaw)) < 180)
         {
             cmd_auto_msg.data = 1;
         }
@@ -122,15 +124,15 @@ public:
         }
         else if (button.A)
         {
-            send_goal(0, 0, conv.toRad(0));
+            send_goal(-0.222, -2.291, conv.toRad(0));
         }
         else if (button.Y)
         {
-            send_goal(5, 3, conv.toRad(180));
+            send_goal(3.3, 2, conv.toRad(180));
         }
         else if (button.B)
         {
-            send_goal(7, -3, conv.toRad(0));
+            send_goal(7, -3, conv.toRad(90));
         }
     }
 
