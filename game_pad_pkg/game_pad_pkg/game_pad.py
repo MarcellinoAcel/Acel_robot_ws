@@ -1,8 +1,8 @@
 import sys
 import pygame
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Int32MultiArray
-from std_msgs.msg import Int32
+from std_msgs.msg import Int8MultiArray
+from std_msgs.msg import Int8
 import rclpy
 from rclpy.node import Node
 import time
@@ -12,9 +12,9 @@ class GamePad(Node):
         super().__init__("game_pad")
         
         self.publisher_axis = self.create_publisher(Twist, 'cmd_vel_joy', 10)
-        self.publisher_button = self.create_publisher(Int32MultiArray, 'button', 10)
-        self.publisher_micros = self.create_publisher(Int32,'button_micros',10)
-        self.publisher_catcher = self.create_publisher(Int32,'button_catcher', 10)
+        self.publisher_button = self.create_publisher(Int8MultiArray, 'button', 10)
+        self.publisher_micros = self.create_publisher(Int8,'button_micros',10)
+        self.publisher_catcher = self.create_publisher(Int8,'button_catcher', 10)
         
         pygame.init()
         pygame.joystick.init()
@@ -57,7 +57,7 @@ class GamePad(Node):
     def button_callback(self):
         pygame.event.pump()
 
-        msg = Int32MultiArray()
+        msg = Int8MultiArray()
         button_states = []
         button_status = [self.joystick.get_button(i) for i in range(self.joystick.get_numbuttons())]
         hat_states = [self.joystick.get_hat(i) for i in range(self.joystick.get_numhats())]
@@ -119,9 +119,9 @@ class GamePad(Node):
     def micro_callback(self):
         pygame.event.pump()
 
-        msg = Int32()
+        msg = Int8()
         msg.data = self.joystick.get_button(9)
-        catch = Int32()
+        catch = Int8()
         catch.data = self.joystick.get_button(8)
         
         self.publisher_catcher.publish(catch)

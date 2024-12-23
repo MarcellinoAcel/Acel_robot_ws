@@ -2,8 +2,8 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "geometry_msgs/msg/pose2_d.hpp"
-#include "std_msgs/msg/int32_multi_array.hpp"
-#include "std_msgs/msg/int32.hpp"
+#include "std_msgs/msg/int8_multi_array.hpp"
+#include "std_msgs/msg/int8.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "bv_nav/convertion.hpp"
@@ -20,7 +20,7 @@ public:
             this,
             "navigate_to_pose");
 
-        this->button_sub = this->create_subscription<std_msgs::msg::Int32MultiArray>(
+        this->button_sub = this->create_subscription<std_msgs::msg::Int8MultiArray>(
             "button", 10, std::bind(&Bv_nav::sign_callback, this, std::placeholders::_1));
 
         RCLCPP_INFO(this->get_logger(), "Subscribed to /button");
@@ -36,7 +36,7 @@ public:
         sub_amcl = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
             "amcl_pose", 10, std::bind(&Bv_nav::robot_pose, this, _1));
 
-        pub_cmd_auto = this->create_publisher<std_msgs::msg::Int32>("cmd_dribble", 10);
+        pub_cmd_auto = this->create_publisher<std_msgs::msg::Int8>("cmd_dribble", 10);
 
         pub_movement_mode = this->create_publisher<std_msgs::msg::Float32>("movement_mode", 10);
     }
@@ -82,7 +82,7 @@ public:
         double yaw, pitch, roll;
         conv.quat_to_eular(q, yaw, pitch, roll);
 
-        auto cmd_auto_msg = std_msgs::msg::Int32();
+        auto cmd_auto_msg = std_msgs::msg::Int8();
         if ((msg.pose.pose.position.x < 5.5 && msg.pose.pose.position.x > 4.5) && fabs(yaw) < 1)
         {
             cmd_auto_msg.data = 1;
@@ -102,7 +102,7 @@ public:
         pub_pose->publish(robot_pose);
     }
 
-    void sign_callback(const std_msgs::msg::Int32MultiArray &msg)
+    void sign_callback(const std_msgs::msg::Int8MultiArray &msg)
     {
         button.A = msg.data[0];
         button.B = msg.data[1];
@@ -157,17 +157,17 @@ private:
     rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr client_ptr_;
 
     rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr pub_pose;
-    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr pub_cmd_auto;
+    rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr pub_cmd_auto;
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_movement_mode;
 
-    rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr sub_button;
+    rclcpp::Subscription<std_msgs::msg::Int8MultiArray>::SharedPtr sub_button;
 
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_amcl;
 
     rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr goal_handle_;
     Convertion conv;
 
-    rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr button_sub;
+    rclcpp::Subscription<std_msgs::msg::Int8MultiArray>::SharedPtr button_sub;
 
     void goal_response_callback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr &goal_handle)
     {
