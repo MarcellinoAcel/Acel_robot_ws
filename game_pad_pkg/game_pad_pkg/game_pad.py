@@ -16,6 +16,7 @@ class GamePad(Node):
         self.publisher_micros = self.create_publisher(Int8,'button_micros',10)
         self.publisher_catcher = self.create_publisher(Int8,'button_catcher', 10)
         self.publisher_allbutton_micros = self.create_publisher(Int8, "allButton", 10)
+        self.publisher_hats = self.create_publisher(Int8MultiArray,'hats', 10)
         
         pygame.init()
         pygame.joystick.init()
@@ -58,18 +59,23 @@ class GamePad(Node):
         pygame.event.pump()
 
         msg = Int8MultiArray()
-        button_states = []
-        button_status = [self.joystick.get_button(i) for i in range(self.joystick.get_numbuttons())]
-        hat_states = [self.joystick.get_hat(i) for i in range(self.joystick.get_numhats())]
+        hat_msg=Int8MultiArray()
+        hat_states = []
+        button_states = [self.joystick.get_button(i) for i in range(self.joystick.get_numbuttons())]
+        
+        for i in range(self.joystick.get_numhats()):
+            x, y = self.joystick.get_hat(i)
+            
+            hat_states.append(x if -128 <= x <= 127 else 0)
+            hat_states.append(y if -128 <= y <= 127 else 0)
 
-        for i in range(self.joystick.get_numbuttons()):
-            button_states.append(self.joystick.get_button(i))
-
-        msg.data = button_states
+        msg.data = button_states   
+        hat_msg.data= hat_states 
         self.publisher_button.publish(msg)
+        self.publisher_hats.publish(hat_msg)
         self.get_logger().info(f'\ncurrent speed : {self.speed}\n')
-        # self.get_logger().info(f'Publishing button states: {button_status}')
-        # self.get_logger().info(f"Hat States: {hat_states}")
+        self.get_logger().info(f'Publishing button states: {button_states}')
+        self.get_logger().info(f"Hat States: {hat_states}")
 
     def axis_callback(self):
         pygame.event.pump()

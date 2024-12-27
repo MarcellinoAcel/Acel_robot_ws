@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'pid_tuning'
+package_name = 'odrive_pkg'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'linear_regression = pid_tuning.linear_regression:main'
+            'odrive_node = odrive_pkg.odrive_node:main'
         ],
     },
 )
