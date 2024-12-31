@@ -46,7 +46,7 @@ amcl:
       # -0.222 -2.291 -0.064
       x: -0.222
       y: -2.291
-      yaw:  3.14
+      yaw:  0.0
 
 amcl_map_client:
   ros__parameters:

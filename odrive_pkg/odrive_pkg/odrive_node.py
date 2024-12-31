@@ -4,7 +4,7 @@ from odrive.enums import *
 import time
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int8MultiArray
 class OdriveControllerNode(Node):
     def __init__(self):
         super().__init__('odrive_controller_node')
@@ -23,7 +23,9 @@ class OdriveControllerNode(Node):
         self.odrv0.axis1.requested_state = odrive.enums.AXIS_STATE_CLOSED_LOOP_CONTROL
         self.odrv0.axis1.controller.input_vel = self.speed
 
-        self.subscription_drive= self.create_subscription(Int32MultiArray, 'hats', self.button_callback,10)
+        self.get_logger().info(f"\nCurrent speed: {self.speed}")
+
+        self.subscription_drive= self.create_subscription(Int8MultiArray, 'hats', self.button_callback,10)
 
         self.button12_pressed = False
         self.button13_pressed = False
