@@ -17,6 +17,7 @@ class GamePad(Node):
         self.publisher_catcher = self.create_publisher(Int8,'button_catcher', 10)
         self.publisher_allbutton_micros = self.create_publisher(Int8, "allButton", 10)
         self.publisher_hats = self.create_publisher(Int8MultiArray,'hats', 10)
+        self.publisher_push = self.create_publisher(Int8, "push2launch", 10)
         
         pygame.init()
         pygame.joystick.init()
@@ -132,6 +133,8 @@ class GamePad(Node):
         allbutton = Int8()
         pressed = False 
         allbutton.data = self.sign
+        push = Int8()
+        push.data = self.joystick.get_button(11)
         for i in range(self.joystick.get_numbuttons()):
             if(self.joystick.get_button(i)):
                 self.sign = i
@@ -142,7 +145,7 @@ class GamePad(Node):
             self.sign = 35
         self.publisher_allbutton_micros.publish(allbutton)
         self.publisher_catcher.publish(catch)
-
+        self.publisher_push.publish(push)
         self.publisher_micros.publish(msg)
 def main(args=None):
     rclpy.init(args=args)
