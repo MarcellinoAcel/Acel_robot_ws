@@ -1,7 +1,7 @@
 import sys
 import pygame
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int8MultiArray
 import rclpy
 from rclpy.node import Node
 import time
@@ -11,7 +11,7 @@ class GamePad(Node):
         super().__init__("game_pad_sim")
         
         self.publisher_axis = self.create_publisher(Twist, 'cmd_vel', 10)
-        self.publisher_button = self.create_publisher(Int32MultiArray, 'button', 10)
+        self.publisher_button = self.create_publisher(Int8MultiArray, 'button', 10)
         
         pygame.init()
         pygame.joystick.init()
@@ -52,7 +52,7 @@ class GamePad(Node):
     def button_callback(self):
         pygame.event.pump()
 
-        msg = Int32MultiArray()
+        msg = Int8MultiArray()
         button_states = []
 
         for i in range(self.joystick.get_numbuttons()):
