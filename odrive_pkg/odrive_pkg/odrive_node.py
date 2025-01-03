@@ -2,6 +2,7 @@
 import odrive
 from odrive.enums import *
 import time
+import math
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int8MultiArray
@@ -38,6 +39,10 @@ class OdriveControllerNode(Node):
     def robot_pose_callback(self, msg):
         self.x_pose = msg.x
         self.y_pose = msg.y
+        distance = math.sqrt(math.pow(10.418 - msg.x) + math.pow(-0.764 - msg.y))
+        v_total = distance * math.sqrt(9.81 / 2 * 1.43)
+
+        self.get_logger().info(f"\ncurrent launcher speed ={v_total}\n jarak target = {distance}")
 
     def button_callback(self, msg):
 
