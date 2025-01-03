@@ -5,6 +5,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int8MultiArray
+from geometry_msgs.msg import Pose2D
 class OdriveControllerNode(Node):
     def __init__(self):
         super().__init__('odrive_controller_node')
@@ -26,9 +27,17 @@ class OdriveControllerNode(Node):
         self.get_logger().info(f"\nCurrent speed: {self.speed}")
 
         self.subscription_drive= self.create_subscription(Int8MultiArray, 'hats', self.button_callback,10)
+        self.subscription_robot_pose = self.create_subscription(Pose2D, 'robot_position', self.robot_pose_callback,10)
 
         self.button12_pressed = False
         self.button13_pressed = False
+
+        self.x_pose = 0
+        self.y_pose = 0
+
+    def robot_pose_callback(self, msg):
+        self.x_pose = msg.x
+        self.y_pose = msg.y
 
     def button_callback(self, msg):
 
