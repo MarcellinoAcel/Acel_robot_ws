@@ -39,10 +39,16 @@ class OdriveControllerNode(Node):
     def robot_pose_callback(self, msg):
         self.x_pose = msg.x
         self.y_pose = msg.y
+        
         distance = math.sqrt(math.pow(10.418 - msg.x) + math.pow(-0.764 - msg.y))
+        
         v_total = distance * math.sqrt(9.81 / 2 * 1.43)
+        
+        angle_target = math.atan2(-0.764 - msg.y,10.418 - msg.x)
 
-        self.get_logger().info(f"\ncurrent launcher speed ={v_total}\n jarak target = {distance}")
+        self.get_logger().info(f"\ncurrent launcher speed ={v_total}\n")
+        self.get_logger().info(f"\njarak target = {distance}\n")
+        self.get_logger().info(f"\nangle_target = {angle_target}\n")
 
     def button_callback(self, msg):
 
@@ -63,7 +69,7 @@ class OdriveControllerNode(Node):
         
         self.odrv0.axis1.controller.input_vel = self.speed
         self.odrv0.axis0.controller.input_vel = self.speed
-        self.get_logger().info(f"\nCurrent speed: {self.speed}")
+        # self.get_logger().info(f"\nCurrent speed: {self.speed}")
 
 def main(args=None):
     rclpy.init(args=args)
