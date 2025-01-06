@@ -50,18 +50,6 @@ class OdriveControllerNode(Node):
         angle_target = math.atan2(-0.764 - msg.y,10.418 - msg.x)
 
         self.get_logger().info(f"\n ball/launcher speed={v_total}/{w_launcher}\njarak target = {distance}\n angle_target = {angle_target}\n")
-        # self.get_logger().info(f"\n jarak target = {distance}\n")
-        # self.get_logger().info(f"\n angle_target = {angle_target}\n")
-        
-        distance = math.sqrt(math.pow(10.418 - msg.x) + math.pow(-0.764 - msg.y))
-        
-        v_total = distance * math.sqrt(9.81 / 2 * 1.43)
-        
-        angle_target = math.atan2(-0.764 - msg.y,10.418 - msg.x)
-
-        self.get_logger().info(f"\ncurrent launcher speed ={v_total}\n")
-        self.get_logger().info(f"\njarak target = {distance}\n")
-        self.get_logger().info(f"\nangle_target = {angle_target}\n")
 
     def button_callback(self, msg):
 
