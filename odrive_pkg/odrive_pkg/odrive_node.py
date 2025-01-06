@@ -6,6 +6,8 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int8MultiArray
 from geometry_msgs.msg import Pose2D
+from std_msgs.msg import Int8
+import math
 class OdriveControllerNode(Node):
     def __init__(self):
         super().__init__('odrive_controller_node')
@@ -28,6 +30,7 @@ class OdriveControllerNode(Node):
 
         self.subscription_drive= self.create_subscription(Int8MultiArray, 'hats', self.button_callback,10)
         self.subscription_robot_pose = self.create_subscription(Pose2D, 'robot_position', self.robot_pose_callback,10)
+        self.publisher_laser_indicator = self.create_publisher(Int8,"laser_indicator",10)
 
         self.button12_pressed = False
         self.button13_pressed = False
@@ -38,27 +41,39 @@ class OdriveControllerNode(Node):
     def robot_pose_callback(self, msg):
         self.x_pose = msg.x
         self.y_pose = msg.y
+        
+        distance = math.sqrt(math.pow(10.418 - msg.x,2) + math.pow(-0.764 - msg.y,2))
+        
+        v_total = distance * math.sqrt(9.81 / 2 * 1.43)
+        w_launcher = v_total/0.06585
+        angle_target = math.atan2(-0.764 - msg.y,10.418 - msg.x)
+
+        self.get_logger().info(f"\n ball/launcher speed={v_total}/{w_launcher}\njarak target = {distance}\n angle_target = {angle_target}\n")
+        # self.get_logger().info(f"\n jarak target = {distance}\n")
+        # self.get_logger().info(f"\n angle_target = {angle_target}\n")
 
     def button_callback(self, msg):
 
         if msg.data[1] > 0 and not self.button12_pressed:
-            self.speed += 10.0
+            self.speed += 5.0
             self.button12_pressed = True
         elif not msg.data[1]:
             self.button12_pressed = False
 
         if msg.data[1] < 0 and not self.button13_pressed:
-            self.speed -= 10.0
+            self.speed -= 5.0
             self.button13_pressed = True
         elif not msg.data[1]:
             self.button13_pressed = False
 
         self.speed = max(0.0, min(self.speed, 40.0))
+        laser_ind_msg = Int8()
+        laser_ind_msg.data = 1 if self.speed > 0 else 0
 
-        
+        self.publisher_laser_indicator.publish(laser_ind_msg)
         self.odrv0.axis1.controller.input_vel = self.speed
         self.odrv0.axis0.controller.input_vel = self.speed
-        self.get_logger().info(f"\nCurrent speed: {self.speed}")
+        # self.get_logger().info(f"\nCurrent speed: {self.speed}")
 
 def main(args=None):
     rclpy.init(args=args)

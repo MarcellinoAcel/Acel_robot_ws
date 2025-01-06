@@ -15,7 +15,7 @@ class GamePad(Node):
         self.publisher_button = self.create_publisher(Int8MultiArray, 'button', 10)
         self.publisher_micros = self.create_publisher(Int8,'button_micros',10)
         self.publisher_catcher = self.create_publisher(Int8,'button_catcher', 10)
-        self.publisher_allbutton_micros = self.create_publisher(Int8, "allButton", 10)
+        self.publisher_allbutton_micros = self.create_publisher(Int8, "allbutton", 10)
         self.publisher_hats = self.create_publisher(Int8MultiArray,'hats', 10)
         self.publisher_push = self.create_publisher(Int8, "push2launch", 10)
         
@@ -74,9 +74,9 @@ class GamePad(Node):
         hat_msg.data= hat_states 
         self.publisher_button.publish(msg)
         self.publisher_hats.publish(hat_msg)
-        self.get_logger().info(f'\ncurrent speed : {self.speed}\n')
-        self.get_logger().info(f'Publishing button states: {button_states}')
-        self.get_logger().info(f"Hat States: {hat_states}")
+        # self.get_logger().info(f'\ncurrent speed : {self.speed}\n')
+        # self.get_logger().info(f'Publishing button states: {button_states}')
+        # self.get_logger().info(f"Hat States: {hat_states}")
 
     def axis_callback(self):
         pygame.event.pump()
@@ -119,8 +119,8 @@ class GamePad(Node):
 
         self.publisher_axis.publish(twist)
         
-        self.get_logger().info(f"\nLinear Velocity X: {linear_axis_X}\nLinear Velocity Y: {linear_axis_Y}\nAngular Velocity: {angular_axis_Z}\n")
-        self.get_logger().info(f"\nCurrent speed: {self.joystick.get_axis}")
+        # self.get_logger().info(f"\nLinear Velocity X: {linear_axis_X}\nLinear Velocity Y: {linear_axis_Y}\nAngular Velocity: {angular_axis_Z}\n")
+        # self.get_logger().info(f"\nCurrent speed: {self.joystick.get_axis}")
 
 
     def micro_callback(self):
