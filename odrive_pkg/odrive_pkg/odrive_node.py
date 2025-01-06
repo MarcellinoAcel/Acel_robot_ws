@@ -43,9 +43,9 @@ class OdriveControllerNode(Node):
         self.x_pose = msg.x
         self.y_pose = msg.y
         
-        distance = math.sqrt(math.pow(10.418 - msg.x,2) + math.pow(-0.764 - msg.y,2))
-        
-        v_total = distance * math.sqrt(9.81 / 2 * 1.43)
+        flat_side = math.sqrt(math.pow(10.418 - msg.x,2) + math.pow(-0.764 - msg.y,2))
+        distance = math.sqrt(math.pow(flat_side,2) + math.pow(1.43))
+        v_total = flat_side * math.sqrt(9.81 / 2 * 1.43)
         w_launcher = v_total/0.06585
         angle_target = math.atan2(-0.764 - msg.y,10.418 - msg.x)
 
