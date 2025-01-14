@@ -13,6 +13,8 @@ find_package(std_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 add_executable(bv_nav src/bv_nav.cpp)
 target_include_directories(bv_nav PUBLIC
@@ -27,6 +29,8 @@ ament_target_dependencies(
   "rclcpp"
   "rclcpp_action"
   "tf2"
+  "sensor_msgs"
+  "visualization_msgs"
 )
 
 install(TARGETS bv_nav
