@@ -300,7 +300,7 @@ public:
         find_valid_target(x_target, y_target, angle_target, ring_pose_x, ring_pose_y, 3.0, msg);
 
         RCLCPP_INFO(this->get_logger(), "Valid target found at: x=%.2f, y=%.2f, theta=%.2f",
-                    x_target, y_target, conv.toDeg(-angle_target));
+                    x_target, y_target, conv.toDeg(angle_target));
     }
 
     void sign_callback(const std_msgs::msg::Int8MultiArray &msg)
