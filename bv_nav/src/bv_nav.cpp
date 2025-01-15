@@ -108,6 +108,9 @@ public:
         robot_pose.x = msg.pose.pose.position.x;
         robot_pose.y = msg.pose.pose.position.y;
         robot_pose.theta = conv.toDeg(yaw);
+        pose_robot.x= msg.pose.pose.position.x;
+        pose_robot.y = msg.pose.pose.position.y;
+        pose_robot.theta = yaw;
 
         pub_pose->publish(robot_pose);
     }
@@ -144,7 +147,6 @@ public:
 
         double x_ring = ring_pose_x;
         double y_ring = ring_pose_y;
-        double radius = 3.0;
         int num_points = 180;
         for (int i = 0; i < num_points; ++i)
         {
@@ -189,21 +191,21 @@ public:
     }
 
     void ring_target(float &robotX_target, float &robotY_target, float &angle_target,
-                     float ring_in_x, float ring_in_y, float radius, float degree)
+                     float ring_in_x, float ring_in_y, float radius_local_var, float degree)
     {
-        robotX_target = ring_in_x + (radius * cos(degree));
-        robotY_target = ring_in_y + (radius * sin(degree));
+        robotX_target = ring_in_x + (radius_local_var * cos(degree));
+        robotY_target = ring_in_y + (radius_local_var * sin(degree));
 
         angle_target = atan2(ring_in_y - robotY_target, ring_in_x - robotX_target) + M_PI;
 
-        if (angle_target > M_PI)
-        {
-            angle_target -= 2 * M_PI;
-        }
-        else if (angle_target < -M_PI)
-        {
-            angle_target += 2 * M_PI;
-        }
+        // if (angle_target > M_PI)
+        // {
+        //     angle_target -= 2 * M_PI;
+        // }
+        // else if (angle_target < -M_PI)
+        // {
+        //     angle_target += 2 * M_PI;
+        // }
     }
 
     bool valid_pose(float x_target,
@@ -254,7 +256,7 @@ public:
         return obstacle_count;
     }
     void find_valid_target(float &x_target, float &y_target, float &angle_target,
-                           float x_ring, float y_ring, float radius,
+                           float x_ring, float y_ring, float radius_local_var,
                            const sensor_msgs::msg::LaserScan::SharedPtr &scan_msg)
     {
         float x, y, h;
@@ -270,7 +272,7 @@ public:
         {
             float angle = (3 * M_PI / 2) + i * (-M_PI / num_points);
             ring_target(x, y, h,
-                        x_ring, y_ring, radius, angle);
+                        x_ring, y_ring, radius_local_var, angle);
 
             if (valid_pose(x, y, scan_msg) == true)
             {
@@ -297,10 +299,10 @@ public:
         // RCLCPP_INFO(this->get_logger(), "Ranges[0]: %.2f", msg->ranges[0]);
         // RCLCPP_INFO(this->get_logger(), "size of array %zu", msg->ranges.size());
 
-        find_valid_target(x_target, y_target, angle_target, ring_pose_x, ring_pose_y, 3.0, msg);
+        find_valid_target(x_target, y_target, angle_target, ring_pose_x, ring_pose_y, radius, msg);
 
-        RCLCPP_INFO(this->get_logger(), "Valid target found at: x=%.2f, y=%.2f, theta=%.2f",
-                    x_target, y_target, conv.toDeg(angle_target));
+        RCLCPP_INFO(this->get_logger(), "\nValid target found at: x=%.2f, y=%.2f, theta=%.2f\ncurrent robot pose: x=%.2f, y=%.2f, theta=%.2f",
+                    x_target, y_target, conv.toDeg(angle_target), pose_robot.x,pose_robot.y,conv.toDeg(pose_robot.theta));
     }
 
     void sign_callback(const std_msgs::msg::Int8MultiArray &msg)
@@ -343,6 +345,13 @@ private:
     float angle_target = 0;
     float ring_pose_x = 10.418298947057105;
     float ring_pose_y = -0.7647802456343102;
+    float radius = 4.0;
+    struct pose
+    {
+        float x;
+        float y;
+        float theta;
+    }pose_robot;
     struct b
     {
         int A;
