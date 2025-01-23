@@ -44,9 +44,12 @@ amcl:
       # y: -4.532
       # yaw: 0.402
       # -0.281 -2.316 -0.119
-      x: -0.281
-      y: -2.316
-      yaw:  -0.05
+      # x: -0.281
+      # y: -2.316
+      # yaw:  -0.05
+      x: 0.0
+      y: 0.0
+      yaw: 0.0
 
 amcl_map_client:
   ros__parameters:
@@ -271,8 +274,8 @@ local_costmap:
   local_costmap:
     ros__parameters:
       use_sim_time: false
-      update_frequency: 5.0
-      publish_frequency: 5.0
+      update_frequency: 7.0
+      publish_frequency: 7.0
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
@@ -369,7 +372,7 @@ planner_server:
       # interpolation_resolution: 0.1
       plugin: "nav2_navfn_planner/NavfnPlanner"
       tolerance: 0.5
-      use_astar: false
+      use_astar: True
       allow_unknown: true
 
 planner_server_rclcpp_node:

@@ -343,9 +343,9 @@ private:
     float x_target = 0;
     float y_target = 0;
     float angle_target = 0;
-    float ring_pose_x = 10.418298947057105;
-    float ring_pose_y = -0.7647802456343102;
-    float radius = 4.0;
+    float ring_pose_x = 10.5;
+    float ring_pose_y = 2.45;
+    float radius = 3.5;
     struct pose
     {
         float x;
