@@ -32,6 +32,7 @@ class OdriveControllerNode(Node):
         self.subscription_drive= self.create_subscription(Int8MultiArray, 'hats', self.button_callback,10)
         self.subscription_robot_pose = self.create_subscription(Pose2D, 'robot_position', self.robot_pose_callback,10)
         self.publisher_laser_indicator = self.create_publisher(Int8,"laser_indicator",10)
+        self.publisher_current_speed = self.create_publisher(Int8, "launcher_speed", 10)
 
         self.button_up = False
         self.button_down = False
@@ -76,6 +77,10 @@ class OdriveControllerNode(Node):
         self.publisher_laser_indicator.publish(laser_ind_msg)
         self.odrv0.axis1.controller.input_vel = self.speed
         self.odrv0.axis0.controller.input_vel = self.speed
+        
+        launcher_speed_msg = Int8()
+        launcher_speed_msg.data = self.speed
+        self.publisher_current_speed(launcher_speed_msg)
         # self.get_logger().info(f"\nCurrent speed: {self.speed}")
         self.get_logger().info(f"\n ball/launcher speed={self.v_total}/{self.w_launcher}\njarak target = {self.distance}\n angle_target = {self.angle_target}\nCurrent speed: {self.speed}\n")
 

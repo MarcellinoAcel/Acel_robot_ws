@@ -68,16 +68,16 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        GroupAction(
-            actions=[
-                SetRemap(src=point_cloud_topics[depth_sensor_name], dst='/camera/depth/color/points'),
-                IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource(depth_launch_path),
-                    condition=IfCondition(PythonExpression(['"" != "', depth_sensor_name, '"'])),
-                    launch_arguments={'sensor': depth_sensor_name}.items()   
-                )
-            ]
-        ),
+        # GroupAction(
+        #     actions=[
+        #         SetRemap(src=point_cloud_topics[depth_sensor_name], dst='/camera/depth/color/points'),
+        #         IncludeLaunchDescription(
+        #             PythonLaunchDescriptionSource(depth_launch_path),
+        #             condition=IfCondition(PythonExpression(['"" != "', depth_sensor_name, '"'])),
+        #             launch_arguments={'sensor': depth_sensor_name}.items()   
+        #         )
+        #     ]
+        # ),dfd
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(laser_launch_path),
             condition=IfCondition(PythonExpression(['"" != "', laser_sensor_name, '"'])),
