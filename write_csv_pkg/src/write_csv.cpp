@@ -48,6 +48,9 @@ private:
 	int home_is_pressed = 0;
 	int axisR_is_pressed = 0;
 
+    float ring_pose_x = 10.5;
+    float ring_pose_y = 2.45;
+
 public:
 	DataCollect() : Node("write_csv")
 	{
@@ -66,6 +69,9 @@ public:
 		pose_robot.x = msg.x;
 		pose_robot.y = msg.y;
 		pose_robot.theta = msg.theta;
+		// √((x_2-x_1)²+(y_2-y_1)²)
+		distance = sqrt(pow(ring_pose_x - msg.x,2) + pow(ring_pose_y - msg.y, 2));
+
 	}
 
 	void flywheel_speed_callback(const std_msgs::msg::Int8 &msg)
@@ -87,7 +93,7 @@ public:
 		button.select = msg.data[10];
 		button.start = msg.data[11];
 		button.home = msg.data[12];
-		button.axisR = msg.data[15];
+		button.axisR = msg.data[14];
 
 		if (button.home && !home_is_pressed)
 		{
@@ -116,7 +122,7 @@ public:
 		std::string line;
 
 		set<string> existingData;
-		std::string fileName = "/home/marcel/linorobot2_ws/src/linorobot2/data_collect/data_collect.csv";
+		std::string fileName = "/home/barelangv/linorobot2_ws/src/linorobot2/data_collect/data_collect.csv";
 		readFile.open(fileName.c_str());
 
 		if (!readFile.is_open())
@@ -131,7 +137,7 @@ public:
 
 		readFile.close();
 
-		std::string newData = to_string(launcher_speed) + ", " + to_string(55) + "," + to_string(distance) + "," + to_string(1.43) + "," + to_string(ball_status);
+		std::string newData = to_string(launcher_speed) + ", " + to_string(55) + "," + to_string(distance) + "," + to_string(pose_robot.theta) + "," + to_string(1.43) + "," + to_string(ball_status);
 
 		file.open(fileName.c_str(), ios::app);
 

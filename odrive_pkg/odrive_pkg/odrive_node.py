@@ -79,8 +79,8 @@ class OdriveControllerNode(Node):
         self.odrv0.axis0.controller.input_vel = self.speed
         
         launcher_speed_msg = Int8()
-        launcher_speed_msg.data = self.speed
-        self.publisher_current_speed(launcher_speed_msg)
+        launcher_speed_msg.data = int(self.speed)
+        self.publisher_current_speed.publish(launcher_speed_msg)
         # self.get_logger().info(f"\nCurrent speed: {self.speed}")
         self.get_logger().info(f"\n ball/launcher speed={self.v_total}/{self.w_launcher}\njarak target = {self.distance}\n angle_target = {self.angle_target}\nCurrent speed: {self.speed}\n")
 
