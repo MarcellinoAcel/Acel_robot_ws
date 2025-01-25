@@ -17,6 +17,7 @@ private:
 	rclcpp::Subscription<std_msgs::msg::Int8MultiArray>::SharedPtr button_sub;
 	rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr flywheel_speed_sub;
 	rclcpp::Subscription<geometry_msgs::msg::Pose2D>::SharedPtr robot_pose_sub;
+	rclcpp::Subscription<std_msgs::msg::Int8MultiArray>::SharedPtr hats_sub;
 	struct b
 	{
 		int A;
@@ -45,11 +46,11 @@ private:
 	float distance;
 
 	int launcher_speed = 0;
-	int home_is_pressed = 0;
-	int axisR_is_pressed = 0;
+	int rightAxis_is_pressed = 0;
+	int leftAxis_is_pressed = 0;
 
-    float ring_pose_x = 10.5;
-    float ring_pose_y = 2.45;
+	float ring_pose_x = 10.5;
+	float ring_pose_y = 2.45;
 
 public:
 	DataCollect() : Node("write_csv")
@@ -62,6 +63,17 @@ public:
 
 		this->robot_pose_sub = this->create_subscription<geometry_msgs::msg::Pose2D>(
 			"robot_position", 10, std::bind(&DataCollect::robot_pose_callback, this, std::placeholders::_1));
+
+		this->hats_sub = this->create_subscription<std_msgs::msg::Int8MultiArray>(
+			"hats", 10, std::bind(&DataCollect::hats_callback, this, std::placeholders::_1));
+	}
+
+	void hats_callback(const std_msgs::msg::Int8MultiArray &msg)
+	{
+		button.Up = (msg.data[1] == 1) ? 1 : 0;
+		button.Down = (msg.data[1] == -1) ? 1 : 0;
+		button.Right = (msg.data[0] == 1) ? 1 : 0;
+		button.Left = (msg.data[0] == -1) ? 1 : 0;
 	}
 
 	void robot_pose_callback(const geometry_msgs::msg::Pose2D &msg)
@@ -70,8 +82,7 @@ public:
 		pose_robot.y = msg.y;
 		pose_robot.theta = msg.theta;
 		// √((x_2-x_1)²+(y_2-y_1)²)
-		distance = sqrt(pow(ring_pose_x - msg.x,2) + pow(ring_pose_y - msg.y, 2));
-
+		distance = sqrt(pow(ring_pose_x - msg.x, 2) + pow(ring_pose_y - msg.y, 2));
 	}
 
 	void flywheel_speed_callback(const std_msgs::msg::Int8 &msg)
@@ -95,24 +106,24 @@ public:
 		button.home = msg.data[12];
 		button.axisR = msg.data[14];
 
-		if (button.home && !home_is_pressed)
+		if (button.Right && !rightAxis_is_pressed)
 		{
 			addData(1);
-			home_is_pressed = 1;
+			rightAxis_is_pressed = 1;
 		}
 		else if (button.home == 0)
 		{
-			home_is_pressed = 0;
+			rightAxis_is_pressed = 0;
 		}
-		if (button.axisR && !axisR_is_pressed)
+		if (button.Left && !leftAxis_is_pressed)
 		{
 			addData(0);
-			axisR_is_pressed = 1;
+			leftAxis_is_pressed = 1;
 		}
-		else if (button.axisR == 0)
+		else if (button.Left == 0)
 		{
 
-			axisR_is_pressed = 0;
+			leftAxis_is_pressed = 0;
 		}
 	}
 	void addData(int ball_status)
