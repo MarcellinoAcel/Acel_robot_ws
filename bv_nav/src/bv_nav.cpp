@@ -326,7 +326,7 @@ public:
         else if (button.A)
         {
             // send_goal(-0.789, -2.416, conv.toRad(-2.368));
-            send_goal(-0.281, -2.316, -0.119);
+            send_goal(0.0, 0.0, -0.0);
         }
         else if (button.Y)
         {
