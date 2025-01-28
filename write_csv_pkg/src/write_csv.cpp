@@ -92,7 +92,6 @@ public:
 
 	void button_callback(const std_msgs::msg::Int8MultiArray &msg)
 	{
-
 		button.A = msg.data[0];
 		button.B = msg.data[1];
 		button.X = msg.data[3];
@@ -148,7 +147,7 @@ public:
 
 		readFile.close();
 
-		std::string newData = to_string(launcher_speed) + ", " + to_string(55) + "," + to_string(distance) + "," + to_string(pose_robot.theta) + "," + to_string(1.43) + "," + to_string(ball_status);
+		std::string newData = to_string(launcher_speed) + "," + to_string(distance) + "," + to_string(pose_robot.x) + "," + to_string(pose_robot.y) + "," + to_string(pose_robot.theta) + "," + to_string(ball_status);
 
 		file.open(fileName.c_str(), ios::app);
 
