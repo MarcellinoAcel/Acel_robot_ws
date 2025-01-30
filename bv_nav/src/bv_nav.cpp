@@ -108,7 +108,7 @@ public:
         robot_pose.x = msg.pose.pose.position.x;
         robot_pose.y = msg.pose.pose.position.y;
         robot_pose.theta = conv.toDeg(yaw);
-        pose_robot.x= msg.pose.pose.position.x;
+        pose_robot.x = msg.pose.pose.position.x;
         pose_robot.y = msg.pose.pose.position.y;
         pose_robot.theta = yaw;
 
@@ -301,8 +301,8 @@ public:
 
         find_valid_target(x_target, y_target, angle_target, ring_pose_x, ring_pose_y, radius, msg);
 
-        RCLCPP_INFO(this->get_logger(), "\nValid target found at: x=%.2f, y=%.2f, theta=%.2f\ncurrent robot pose: x=%.2f, y=%.2f, theta=%.2f",
-                    x_target, y_target, conv.toDeg(angle_target), pose_robot.x,pose_robot.y,conv.toDeg(pose_robot.theta));
+        // RCLCPP_INFO(this->get_logger(), "\nValid target found at: x=%.2f, y=%.2f, theta=%.2f\ncurrent robot pose: x=%.2f, y=%.2f, theta=%.2f",
+        //             x_target, y_target, conv.toDeg(angle_target), pose_robot.x, pose_robot.y, conv.toDeg(pose_robot.theta));
     }
 
     void sign_callback(const std_msgs::msg::Int8MultiArray &msg)
@@ -323,23 +323,33 @@ public:
         {
             client_ptr_->async_cancel_all_goals();
         }
-        else if (button.A)
+        else if (button.A == 1)
         {
             // send_goal(-0.789, -2.416, conv.toRad(-2.368));
             send_goal(0.0, 0.0, -0.0);
         }
-        else if (button.Y)
+        else if (button.Y == 1 && sign_Y == 0)
         {
-            send_goal(3.3, 0, 0.0);
+            send_goal(3, 0, 0.0);
         }
         else if (button.B)
         {
-            send_goal(x_target, y_target, angle_target);
+            // send_goal(x_target, y_target, angle_target);
             // send_goal(6.3, -0.0416, conv.toRad(175));
+
+            sign_Y = 1;
+            send_goal(3, 3, 0);
         }
+        else if (button.Y && sign_Y == 1)
+        {
+            send_goal(0, 3, 0);
+        }
+        RCLCPP_INFO(this->get_logger(), "\n%d, %d\n", sign_A, sign_Y);
     }
 
 private:
+    int sign_A = 0;
+    int sign_Y = 0;
     float x_target = 0;
     float y_target = 0;
     float angle_target = 0;
@@ -351,7 +361,7 @@ private:
         float x;
         float y;
         float theta;
-    }pose_robot;
+    } pose_robot;
     struct b
     {
         int A;

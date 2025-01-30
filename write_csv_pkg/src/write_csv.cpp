@@ -6,6 +6,7 @@
 #include "std_msgs/msg/int8.hpp"
 #include "geometry_msgs/msg/pose2_d.hpp"
 #include "std_msgs/msg/int8_multi_array.hpp"
+#include "std_msgs/msg/float32_multi_array.hpp"
 
 using std::placeholders::_1;
 
@@ -18,6 +19,7 @@ private:
 	rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr flywheel_speed_sub;
 	rclcpp::Subscription<geometry_msgs::msg::Pose2D>::SharedPtr robot_pose_sub;
 	rclcpp::Subscription<std_msgs::msg::Int8MultiArray>::SharedPtr hats_sub;
+	rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr imu_sub;
 	struct b
 	{
 		int A;
@@ -66,8 +68,14 @@ public:
 
 		this->hats_sub = this->create_subscription<std_msgs::msg::Int8MultiArray>(
 			"hats", 10, std::bind(&DataCollect::hats_callback, this, std::placeholders::_1));
+		this->imu_sub = this->create_subscription<std_msgs::msg::Float32MultiArray>(
+			"checking_input", 10, std::bind(&DataCollect::imu_callback, this, std::placeholders::_1));
 	}
 
+	void imu_callback(const std_msgs::msg::Float32MultiArray &msg)
+	{
+		addData(msg.data[0]);
+	}
 	void hats_callback(const std_msgs::msg::Int8MultiArray &msg)
 	{
 		button.Up = (msg.data[1] == 1) ? 1 : 0;
@@ -88,6 +96,7 @@ public:
 	void flywheel_speed_callback(const std_msgs::msg::Int8 &msg)
 	{
 		launcher_speed = msg.data;
+		addData(0);
 	}
 
 	void button_callback(const std_msgs::msg::Int8MultiArray &msg)
@@ -125,14 +134,14 @@ public:
 			leftAxis_is_pressed = 0;
 		}
 	}
-	void addData(int ball_status)
+	void addData(float imu_data)
 	{
 		std::ifstream readFile;
 		std::ofstream file;
 		std::string line;
 
 		set<string> existingData;
-		std::string fileName = "/home/barelangv/linorobot2_ws/src/linorobot2/data_collect/data_collect.csv";
+		std::string fileName = "/home/barelangv/linorobot2_ws/src/linorobot2/data_collect/imu_data.csv";
 		readFile.open(fileName.c_str());
 
 		if (!readFile.is_open())
@@ -147,8 +156,8 @@ public:
 
 		readFile.close();
 
-		std::string newData = to_string(launcher_speed) + "," + to_string(distance) + "," + to_string(pose_robot.x) + "," + to_string(pose_robot.y) + "," + to_string(pose_robot.theta) + "," + to_string(ball_status);
-
+		// std::string newData = to_string(launcher_speed) + "," + to_string(distance) + "," + to_string(pose_robot.x) + "," + to_string(pose_robot.y) + "," + to_string(pose_robot.theta) + "," + to_string(ball_status);
+		std::string newData = to_string(imu_data);
 		file.open(fileName.c_str(), ios::app);
 
 		if (!file.is_open())
