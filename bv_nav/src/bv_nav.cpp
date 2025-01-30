@@ -330,7 +330,7 @@ public:
         }
         else if (button.Y)
         {
-            send_goal(3.3, 2, conv.toRad(180));
+            send_goal(3.3, 0, 0.0);
         }
         else if (button.B)
         {
