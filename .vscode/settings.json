@@ -1,7 +1,7 @@
 {
     "C_Cpp.errorSquiggles": "enabled",
     "cmake.options.statusBarVisibility": "visible",
-    "cmake.sourceDirectory": "/home/marcel/linorobot2_ws/src/linorobot2/acel_controller",
+    "cmake.sourceDirectory": "/home/barelangv/linorobot2_ws/src/linorobot2/acel_controller",
     "python.autoComplete.extraPaths": [
         "/home/marcel/linorobot2_ws/install/micro_ros_msgs/local/lib/python3.10/dist-packages",
         "/home/marcel/linorobot2_ws/install/micro_joy_pkg/lib/python3.10/site-packages",

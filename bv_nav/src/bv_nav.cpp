@@ -334,17 +334,17 @@ public:
         }
         else if (button.B)
         {
-            // send_goal(x_target, y_target, angle_target);
+            send_goal(x_target, y_target, angle_target);
             // send_goal(6.3, -0.0416, conv.toRad(175));
 
-            sign_Y = 1;
-            send_goal(3, 3, 0);
+            // sign_Y = 1;
+            // send_goal(3, 3, 0);
         }
-        else if (button.Y && sign_Y == 1)
-        {
-            send_goal(0, 3, 0);
-        }
-        RCLCPP_INFO(this->get_logger(), "\n%d, %d\n", sign_A, sign_Y);
+        // else if (button.Y && sign_Y == 1)
+        // {
+        //     send_goal(0, 3, 0);
+        // }
+        // RCLCPP_INFO(this->get_logger(), "\n%d, %d\n", sign_A, sign_Y);
     }
 
 private:
