@@ -24,7 +24,7 @@ from launch_ros.actions import Node
 from launch.conditions import IfCondition, UnlessCondition
 from launch.actions import TimerAction
 
-MAP_NAME='clean_field_scan' #change to the name of your own map here
+MAP_NAME='update_map_ring' #change to the name of your own map here
 
 def generate_launch_description():
     depth_sensor = os.getenv('LINOROBOT2_DEPTH_SENSOR', '')
